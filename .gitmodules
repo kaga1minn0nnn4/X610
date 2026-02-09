@@ -1,0 +1,27 @@
+[submodule "userlib/RUR_STM_CommonLib"]
+	path = userlib/RUR_STM_CommonLib
+	url = ssh://git@rur.mech.tuat.ac.jp:3884/RUR_Library/RUR_STM_CommonLib.git
+[submodule "userlib/RUR_STM_PeriphLib"]
+	path = userlib/RUR_STM_PeriphLib
+	url = ssh://git@rur.mech.tuat.ac.jp:3884/RUR_Library/RUR_STM_PeriphLib.git
+[submodule "userlib/RUR_STM_G4Lib"]
+	path = userlib/RUR_STM_G4Lib
+	url = ssh://git@rur.mech.tuat.ac.jp:3884/RUR_Library/RUR_STM_G4Lib.git
+[submodule "userlib/soes"]
+	path = userlib/soes
+	url = ssh://git@rur.mech.tuat.ac.jp:3884/RUR_Library/soes.git
+[submodule "userlib/RUR_ECATBoard_Base"]
+	path = userlib/RUR_ECATBoard_Base
+	url = ssh://git@rur.mech.tuat.ac.jp:3884/RUR_Library/RUR_ECATBoard_Base.git
+[submodule "userlib/RUR_EtherCAT_Slave"]
+	path = userlib/RUR_EtherCAT_Slave
+	url = ssh://git@rur.mech.tuat.ac.jp:3884/RUR_Library/RUR_EtherCAT_Slave.git
+[submodule "userlib/NetWorkPresentationLib"]
+	path = userlib/NetWorkPresentationLib
+	url = ssh://git@rur.mech.tuat.ac.jp:3884/RUR_Library/NetWorkPresentationLib.git
+[submodule "userlib/CANProtocol"]
+	path = userlib/CANProtocol
+	url = ssh://git@rur.mech.tuat.ac.jp:3884/RUR_Library/CANProtocol.git
+[submodule "userlib/RUR_CANBoard_Base"]
+	path = userlib/RUR_CANBoard_Base
+	url = ssh://git@rur.mech.tuat.ac.jp:3884/RUR_Library/RUR_CANBoard_Base.git
