@@ -7,15 +7,6 @@
 [submodule "userlib/RUR_STM_G4Lib"]
 	path = userlib/RUR_STM_G4Lib
 	url = ssh://git@rur.mech.tuat.ac.jp:3884/RUR_Library/RUR_STM_G4Lib.git
-[submodule "userlib/soes"]
-	path = userlib/soes
-	url = ssh://git@rur.mech.tuat.ac.jp:3884/RUR_Library/soes.git
-[submodule "userlib/RUR_ECATBoard_Base"]
-	path = userlib/RUR_ECATBoard_Base
-	url = ssh://git@rur.mech.tuat.ac.jp:3884/RUR_Library/RUR_ECATBoard_Base.git
-[submodule "userlib/RUR_EtherCAT_Slave"]
-	path = userlib/RUR_EtherCAT_Slave
-	url = ssh://git@rur.mech.tuat.ac.jp:3884/RUR_Library/RUR_EtherCAT_Slave.git
 [submodule "userlib/NetWorkPresentationLib"]
 	path = userlib/NetWorkPresentationLib
 	url = ssh://git@rur.mech.tuat.ac.jp:3884/RUR_Library/NetWorkPresentationLib.git
