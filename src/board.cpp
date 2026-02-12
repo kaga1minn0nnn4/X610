@@ -6,6 +6,7 @@ G4::UART serial{G4::uart3, G4::PC10, G4::PC11};
 
 G4::TIM it_timer{G4::TimerClockParameter::generate<G4::tim2, kTimerInterruptFreq>()};
 G4::TIM pwm_timer{G4::TimerClockParameter::generate<G4::tim1, kPWMTimerFreq>()};
+G4::TIM esc_control_timer{G4::TimerClockParameter::generate<G4::tim8, kEscControlFreq>()};
 
 std::array<G4::PWM, 3> pwms;
 
@@ -28,12 +29,13 @@ G4::LED user_led{G4::PB7};
 G4::PushSensor user_sw{G4::PB9};
 G4::PushSensor limit_sw{G4::PA0};
 
-std::vector<uint16_t> m2006_enc_values(2);
-std::vector<uint16_t> dummy;
+std::vector<uint16_t> sensor_value_raw_adc1(3);
+std::vector<uint16_t> sensor_value_raw_adc2(2);
 
 bool config() {
     bool result = true;
-    result &= serial.config();
+    // ボーレートを115200に設定。シリアルターミナルも同じ値に設定してください。
+    result &= serial.config(115200);
     if (result) {
         serial << "\n";
         serial << "---------------------------\n";
@@ -56,6 +58,10 @@ bool config() {
     result &= pwm_timer.config(peripheral::tim::CounterMode::triangle, 1);
     serial << "TIM1 init...\t" << result << "\n";
 
+    // result &= esc_control_timer.config();
+    result &= G4::itTimerConfig(esc_control_timer, 1, ctl_timer_task);
+    serial << "TIM8 init...\t" << result << "\n";
+
     result &= pwm_timer.configOC(G4::TIM::Ch::_1, G4::TIM::PWMMode::complementary);
     result &= pwm_timer.configOC(G4::TIM::Ch::_2, G4::TIM::PWMMode::complementary);
     result &= pwm_timer.configOC(G4::TIM::Ch::_3, G4::TIM::PWMMode::complementary);
@@ -71,14 +77,44 @@ bool config() {
     }
     serial << "OPAMP1~3 init...\t" << result << "\n";
 
-    result &= adcs[0].config({LL_ADC_CHANNEL_11, LL_ADC_CHANNEL_14}, {LL_ADC_CHANNEL_VOPAMP1}, m2006_enc_values, LL_ADC_SAMPLINGTIME_2CYCLES_5);
-    result &= adcs[1].config({}, {LL_ADC_CHANNEL_VOPAMP2, LL_ADC_CHANNEL_VOPAMP3_ADC2}, dummy, LL_ADC_SAMPLINGTIME_2CYCLES_5);
+    result &= adcs[0].config({LL_ADC_CHANNEL_VOPAMP1, LL_ADC_CHANNEL_11, LL_ADC_CHANNEL_14}, sensor_value_raw_adc1, LL_ADC_SAMPLINGTIME_2CYCLES_5);
+    result &= adcs[1].config({LL_ADC_CHANNEL_VOPAMP2, LL_ADC_CHANNEL_VOPAMP3_ADC2}, sensor_value_raw_adc2, LL_ADC_SAMPLINGTIME_2CYCLES_5);
     serial << "ADCv2 init...\t" << result << "\n";
 
     result &= canfd.config(peripheral::canfd::Format::fd, peripheral::canfd::Mode::normal, 5e6, 5e6);
     serial << "CANFD1 init...\t" << result << "\n";
 
+    serial << "\n";
+    serial << "---------------------------\n";
+
     return true;
+}
+
+void start_driver() {
+    drvoff.write(false);
+}
+
+void start() {
+    for (auto& adc : adcs) {
+        adc.calibration();
+        adc.enable();
+        delay_ms(50);
+        adc.startConversion();
+    }
+    for (auto& opamp : opamps) {
+        opamp.enable();
+    }
+
+    it_timer.setStart(true);
+    pwm_timer.setStart(true);
+    esc_control_timer.setStart(true);
+
+    for (auto& pwm : pwms) {
+        pwm.setEnable(true);
+        pwm.setDuty(0.f);
+    }
+
+    start_driver();
 }
 
 }
