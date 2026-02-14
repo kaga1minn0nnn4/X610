@@ -15,11 +15,16 @@
 #include "math.h"
 
 
-namespace x610 {
+namespace x610_hardware {
 
 constexpr uint32_t kTimerInterruptFreq = 1000;
 constexpr uint32_t kPWMTimerFreq = 40000;
 constexpr uint32_t kEscControlFreq = 20000;
+
+constexpr uint32_t kOpampGain = 16;
+constexpr float kADCMagnification = 3.3 / 4095.f;
+constexpr float kOpampMagnification = kADCMagnification / 4.f;
+constexpr float kCurrentMagnification = kOpampMagnification * 7000.f / 12.f;
 
 extern G4::UART serial;
 extern G4::TIM it_timer;
@@ -35,14 +40,12 @@ extern G4::LED user_led;
 extern G4::PushSensor user_sw;
 extern G4::PushSensor limit_sw;
 
-extern std::vector<uint16_t> sensor_value_raw_adc1;
-extern std::vector<uint16_t> sensor_value_raw_adc2;
+extern std::vector<uint16_t> sensor_value_raw;
 
 extern void it_timer_task();
-extern void ctl_timer_task();
+extern void adc_task();
 
 bool config();
 
-void start();
 
 }
