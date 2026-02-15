@@ -117,7 +117,7 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-  MX_USART3_UART_Init();
+  // MX_USART3_UART_Init();
 
   main_process();
   /* USER CODE END SysInit */

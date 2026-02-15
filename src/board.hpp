@@ -38,7 +38,7 @@ extern G4::GPIO n_fault;
 extern G4::GPIO drvoff;
 extern G4::LED user_led;
 extern G4::PushSensor user_sw;
-extern G4::PushSensor limit_sw;
+extern G4::GPIO n_sleep;
 
 extern std::vector<uint16_t> sensor_value_raw;
 

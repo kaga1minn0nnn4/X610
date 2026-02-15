@@ -44,6 +44,7 @@ struct DQ {
 };
 
 class BLDCMotorController {
+    static constexpr uint16_t kDutyMax = 90;
 
 public:
     void config();
@@ -66,23 +67,15 @@ public:
     float getPosition() const { return position_; }
 
     void printSensorValue() {
-        // x610_hardware::serial << "uvw raw: ";
-        // x610_hardware::serial << raw_current_[0];
-        // x610_hardware::serial << raw_current_[1] << ", ";
-        // x610_hardware::serial << raw_current_[2];
-
-        // x610_hardware::serial << "enc: ";
-        // x610_hardware::serial << raw_cos_ << ", ";
-        // x610_hardware::serial << raw_sin_;
-
-        // x610_hardware::serial << "\n";
+        x610_hardware::serial << ctl_count_ << "\n";
         // printf("%f, %f, %f\n", current_uvw_.u, current_uvw_.v, current_uvw_.w);
         // printf("%f, %f\n", m2006_enc_.cos, m2006_enc_.sin);
-        printf("d: %f, q: %f, diff: %f\n", current_dq_.d, current_dq_.q, current_dq_.d-current_dq_.q);
+        // printf("d: %f, q: %f, diff: %f\n", current_dq_.d, current_dq_.q, current_dq_.d-current_dq_.q);
     }
 
 
     void updateSensorValue();
+    void resetcount() {ctl_count_ = 0;}
 private:
     void controlTask();
 
@@ -105,6 +98,10 @@ private:
 
     float raw_cos_;
     float raw_sin_;
+
+    float target_voltage_;
+
+    uint32_t ctl_count_;
 };
 
 }

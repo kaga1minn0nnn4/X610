@@ -27,20 +27,20 @@ G4::GPIO n_fault{G4::PC15};
 G4::GPIO drvoff{G4::PC13};
 G4::LED user_led{G4::PB7};
 G4::PushSensor user_sw{G4::PB9};
-G4::PushSensor limit_sw{G4::PA0};
+G4::GPIO n_sleep{G4::PA0};
 
 std::vector<uint16_t> sensor_value_raw(2);
 std::vector<uint16_t> dummy;
 
 bool config() {
     bool result = true;
-    // result &= serial.config(115200);
-    // if (result) {
-    //     serial << "\n";
-    //     serial << "---------------------------\n";
-    //     serial << "X610 v1.0.0\n";
-    //     serial << "Start configuration !!!\n\n";
-    // }
+    result &= serial.config(115200);
+    if (result) {
+        serial << "\n";
+        serial << "---------------------------\n";
+        serial << "X610 v1.0.0\n";
+        serial << "Start configuration !!!\n\n";
+    }
 
     result &= drvoff.config(peripheral::gpio::Mode::out);
     drvoff.write(true); // DRV8328 OFF
@@ -48,46 +48,49 @@ bool config() {
     result &= n_fault.config(peripheral::gpio::Mode::in);
     result &= user_led.config();
     result &= user_sw.config();
-    result &= limit_sw.config();
-    // serial << "GPIO init...\t" << result << "\n";
+    result &= n_sleep.config(peripheral::gpio::Mode::out);
+    n_sleep.write(true);
+    delay_ms(1);
+    // n_sleep.write(false);
+    delay_ms(1);
+    n_sleep.write(true);
+    serial << "GPIO init...\t" << result << "\n";
 
     result &= G4::itTimerConfig(it_timer, 10, it_timer_task);
-    // serial << "TIM2 init...\t" << result << "\n";
+    serial << "TIM2 init...\t" << result << "\n";
 
     result &= pwm_timer.config(peripheral::tim::CounterMode::triangle, 1);
-    // serial << "TIM1 init...\t" << result << "\n";
+    serial << "TIM1 init...\t" << result << "\n";
 
     result &= esc_control_timer.config();
     // result &= G4::itTimerConfig(esc_control_timer, 1, ctl_timer_task);
-    // serial << "TIM8 init...\t" << result << "\n";
+    serial << "TIM8 init...\t" << result << "\n";
 
-    result &= pwm_timer.configOC(G4::TIM::Ch::_1, G4::TIM::PWMMode::complementary, 750e-9);
-    result &= pwm_timer.configOC(G4::TIM::Ch::_2, G4::TIM::PWMMode::complementary, 750e-9);
-    result &= pwm_timer.configOC(G4::TIM::Ch::_3, G4::TIM::PWMMode::complementary, 750e-9);
-    // serial << "TIM1 Channel1~3 init...\t" << result << "\n";
+    result &= pwm_timer.configOC(G4::TIM::Ch::_1, G4::TIM::PWMMode::complementary, 1.0e-6);
+    result &= pwm_timer.configOC(G4::TIM::Ch::_2, G4::TIM::PWMMode::complementary, 1.0e-6);
+    result &= pwm_timer.configOC(G4::TIM::Ch::_3, G4::TIM::PWMMode::complementary, 1.0e-6);
+    serial << "TIM1 Channel1~3 init...\t" << result << "\n";
 
     result &= pwms[0].config(pwm_timer.createChannel(G4::TIM::Ch::_1), G4::PA8, G4::PB13);
     result &= pwms[1].config(pwm_timer.createChannel(G4::TIM::Ch::_2), G4::PA9, G4::PB14);
     result &= pwms[2].config(pwm_timer.createChannel(G4::TIM::Ch::_3), G4::PA10, G4::PB15);
-    // serial << "PWM init...\t" << result << "\n";
+    serial << "PWM init...\t" << result << "\n";
 
     for (auto& opamp : opamps) {
         result &= opamp.config(peripheral::opamp::Mode::pga_io0_bias, peripheral::opamp::Gain::_16_or_minus_15);
     }
-    // serial << "OPAMP1~3 init...\t" << result << "\n";
+    serial << "OPAMP1~3 init...\t" << result << "\n";
 
     result &= adcs[0].config({LL_ADC_CHANNEL_11, LL_ADC_CHANNEL_14}, {LL_ADC_CHANNEL_VOPAMP1}, sensor_value_raw, LL_ADC_SAMPLINGTIME_2CYCLES_5);
     result &= adcs[1].config({}, {LL_ADC_CHANNEL_VOPAMP2, LL_ADC_CHANNEL_VOPAMP3_ADC2}, dummy, LL_ADC_SAMPLINGTIME_2CYCLES_5);
     adcs[0].configIT(adc_task);
-
-    // adcs[0].configDMA(sensor_value_raw);
-    // serial << "ADCv2 init...\t" << result << "\n";
+    serial << "ADCv2 init...\t" << result << "\n";
 
     result &= canfd.config(peripheral::canfd::Format::fd, peripheral::canfd::Mode::normal, 5e6, 5e6);
-    // serial << "CANFD1 init...\t" << result << "\n";
+    serial << "CANFD1 init...\t" << result << "\n";
 
-    // serial << "\n";
-    // serial << "---------------------------\n";
+    serial << "\n";
+    serial << "---------------------------\n";
 
     return true;
 }

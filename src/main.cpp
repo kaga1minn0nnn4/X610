@@ -1,6 +1,7 @@
 #include "main.hpp"
 #include "board.hpp"
 #include "controller.hpp"
+#include "debug.hpp"
 
 uint32_t adc_count = 0;
 
@@ -9,6 +10,9 @@ void x610_hardware::it_timer_task() {
     if (count++ > 1000) {
         count = 0;
         user_led.toggle();
+
+        // controller.printSensorValue();
+        controller.resetcount();
     }
 
     static uint32_t sensor_count = 0;
@@ -27,22 +31,16 @@ bool driver_status = false;
 void main_process(void) {
     x610_hardware::config();
     controller.config();
-    // controller.setMotorBehavior(board::x610::MotorBehavior::enable);
 
     while (true) {
-        // controller.printSensorValue();
-
-        bool sw_status = x610_hardware::user_sw.read();
-        if (sw_status && (!sw_status_last)) {
-            driver_status = !driver_status;
-            if (driver_status) {
-                // x610_hardware::serial << "enable\n";
-                controller.setMotorBehavior(board::x610::MotorBehavior::enable);
-            } else {
-                // x610_hardware::serial << "disable\n";
-                controller.setMotorBehavior(board::x610::MotorBehavior::disable);
-            }
+        auto key = x610_hardware::serial.read().value_or(0);
+        if (key == '\n' || key == '\r') {
+            debug.setup();
+            break;
         }
-        sw_status_last = sw_status;
+    }
+
+    while (true) {
+        debug.run();
     }
 }

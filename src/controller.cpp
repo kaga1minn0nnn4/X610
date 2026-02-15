@@ -43,11 +43,6 @@ void BLDCMotorController::config() {
     x610_hardware::pwm_timer.setStart(true);
     x610_hardware::it_timer.setStart(true);
 
-    for (auto& pwm : x610_hardware::pwms) {
-        pwm.setEnable(true);
-        pwm.setDuty(0.f);
-    }
-
     delay_ms(1000);
 
     for (int i = 0; i < 10; i++) {
@@ -78,20 +73,12 @@ void outputDuty(float alpha, float beta){
     x610_hardware::pwms[2].setDuty(w * 100);
 }
 
-
+void BLDCMotorController::setVoltage(float voltage) {
+    target_voltage_ = voltage;
+}
 
 void BLDCMotorController::controlTask() {
-    DQ dq;
-    AB ab;
-    UVW uvw;
-    dq.d = 0.f;
-    dq.q = 0.3f;
-    ab.update_from_dq(dq, m2006_enc_);
-    uvw.update_from_ab(ab);
 
-    x610_hardware::pwms[0].setDuty(uvw.u * 100);
-    x610_hardware::pwms[1].setDuty(uvw.w * 100);
-    x610_hardware::pwms[2].setDuty(uvw.v * 100);
 }
 
 void BLDCMotorController::setMotorBehavior(MotorBehavior behavior) {
@@ -108,7 +95,20 @@ void BLDCMotorController::setMotorBehavior(MotorBehavior behavior) {
 }
 
 void BLDCMotorController::enableDriver() {
+    // なんかドライバONにした後にPWM出力始めないとnFAULT吐いて落ちる
+
+    for (auto& pwm : x610_hardware::pwms) {
+        pwm.setEnable(false);
+    }
+    delay_ms(10);
+
     x610_hardware::drvoff.write(false);
+
+    delay_ms(100);
+
+    for (auto& pwm : x610_hardware::pwms) {
+        pwm.setEnable(true);
+    }
 }
 
 void BLDCMotorController::disableDriver() {
@@ -137,6 +137,22 @@ void BLDCMotorController::updateSensorValue() {
     for (auto& adc : x610_hardware::adcs) {
         adc.update();
     }
+    ctl_count_++;
+    DQ dq;
+    AB ab;
+    UVW uvw;
+    dq.d = 0.f;
+    dq.q = target_voltage_;
+    ab.update_from_dq(dq, m2006_enc_);
+    uvw.update_from_ab(ab);
+
+    uvw.u = std::clamp<float>(uvw.u, -1.0, 1.0);
+    uvw.v = std::clamp<float>(uvw.v, -1.0, 1.0);
+    uvw.w = std::clamp<float>(uvw.w, -1.0, 1.0);
+
+    x610_hardware::pwms[0].setDuty(uvw.u * kDutyMax);
+    x610_hardware::pwms[1].setDuty(uvw.w * kDutyMax);
+    x610_hardware::pwms[2].setDuty(uvw.v * kDutyMax);
 }
 
 }
