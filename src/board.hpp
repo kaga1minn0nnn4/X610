@@ -23,8 +23,7 @@ constexpr uint32_t kEscControlFreq = 20000;
 
 constexpr uint32_t kOpampGain = 16;
 constexpr float kADCMagnification = 3.3 / 4095.f;
-constexpr float kOpampMagnification = kADCMagnification / 4.f;
-constexpr float kCurrentMagnification = kOpampMagnification * 7000.f / 12.f;
+constexpr float kCurrentMagnification = kADCMagnification / 7.61904 / 0.003;
 
 extern G4::UART serial;
 extern G4::TIM it_timer;

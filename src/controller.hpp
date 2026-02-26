@@ -67,10 +67,16 @@ public:
     float getPosition() const { return position_; }
 
     void printSensorValue() {
-        x610_hardware::serial << ctl_count_ << "\n";
-        // printf("%f, %f, %f\n", current_uvw_.u, current_uvw_.v, current_uvw_.w);
-        // printf("%f, %f\n", m2006_enc_.cos, m2006_enc_.sin);
-        // printf("d: %f, q: %f, diff: %f\n", current_dq_.d, current_dq_.q, current_dq_.d-current_dq_.q);
+        for (int i = 0 ; i < 1000 ; i++) {
+            x610_hardware::serial << uvw_logs_[i].u << "," << uvw_logs_[i].v << "," << uvw_logs_[i].w << ",";
+            x610_hardware::serial << enc_logs_[i].cos << "," << enc_logs_[i].sin << "\n";
+            delay_ms(1);
+        }
+    }
+
+    void enableprint() {
+        x610_hardware::serial << "Begin...\n";
+        enable_print_ = true;
     }
 
 
@@ -83,12 +89,18 @@ private:
     void disableDriver();
 
 private:
+    bool enable_print_ = false;
 
     float current_ = 0.f;
     float velocity_ = 0.f;
     float position_ = 0.f;
 
     std::array<float, 3> raw_current_uvw_offset_;
+
+    std::array<UVW, 1000> uvw_logs_;
+    std::array<M2006EncoderValue, 1000> enc_logs_;
+    uint16_t logs_count_ = 0;
+
 
     UVW current_uvw_;
     AB current_ab_;

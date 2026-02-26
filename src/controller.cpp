@@ -46,31 +46,17 @@ void BLDCMotorController::config() {
     delay_ms(1000);
 
     for (int i = 0; i < 10; i++) {
-        raw_current_uvw_offset_[0] += x610_hardware::adcs[0].getInjectionData(peripheral::adcv2::InjectionChannel::_1) / 10.0f;
-        raw_current_uvw_offset_[1] += x610_hardware::adcs[1].getInjectionData(peripheral::adcv2::InjectionChannel::_1) / 10.0f;
-        raw_current_uvw_offset_[2] += x610_hardware::adcs[1].getInjectionData(peripheral::adcv2::InjectionChannel::_2) / 10.0f;
+        raw_current_uvw_offset_[0] += x610_hardware::adcs[1].getInjectionData(peripheral::adcv2::InjectionChannel::_2) / 10.0f; // u
+        raw_current_uvw_offset_[1] += x610_hardware::adcs[0].getInjectionData(peripheral::adcv2::InjectionChannel::_1) / 10.0f; // v
+        raw_current_uvw_offset_[2] += x610_hardware::adcs[1].getInjectionData(peripheral::adcv2::InjectionChannel::_1) / 10.0f; // w
         delay_ms(100);
     }
+    x610_hardware::serial << "Offset: \n";
+    x610_hardware::serial << raw_current_uvw_offset_[0] << ",";
+    x610_hardware::serial << raw_current_uvw_offset_[1] << ",";
+    x610_hardware::serial << raw_current_uvw_offset_[2] << "\n";
 
-    x610_hardware::esc_control_timer.setStart(true);
-}
-
-float duty_out = 0.1f;
-float freq_out = 10.0f;
-void outputDuty(float alpha, float beta){
-	float norm = sqrt(alpha * alpha + beta * beta);
-	if(norm > 1.0f) {
-		alpha /= norm;
-		beta /= norm;
-		norm = 1.0f;
-	}
-	float u = alpha * kVectorU[0] + beta * kVectorU[1];
-	float v = alpha * kVectorV[0] + beta * kVectorV[1];
-	float w = alpha * kVectorW[0] + beta * kVectorW[1];
-
-    x610_hardware::pwms[0].setDuty(u * 100);
-    x610_hardware::pwms[1].setDuty(v * 100);
-    x610_hardware::pwms[2].setDuty(w * 100);
+    // x610_hardware::esc_control_timer.setStart(true);
 }
 
 void BLDCMotorController::setVoltage(float voltage) {
@@ -116,9 +102,9 @@ void BLDCMotorController::disableDriver() {
 }
 
 void BLDCMotorController::updateSensorValue() {
-	current_uvw_.u = -(x610_hardware::adcs[0].getInjectionData(peripheral::adcv2::InjectionChannel::_1) - raw_current_uvw_offset_[0]) * x610_hardware::kCurrentMagnification;
-	current_uvw_.v = -(x610_hardware::adcs[1].getInjectionData(peripheral::adcv2::InjectionChannel::_1) - raw_current_uvw_offset_[1]) * x610_hardware::kCurrentMagnification;
-	current_uvw_.w = -(x610_hardware::adcs[1].getInjectionData(peripheral::adcv2::InjectionChannel::_2) - raw_current_uvw_offset_[2]) * x610_hardware::kCurrentMagnification;
+	current_uvw_.u = -(x610_hardware::adcs[1].getInjectionData(peripheral::adcv2::InjectionChannel::_2) - raw_current_uvw_offset_[0]) * x610_hardware::kCurrentMagnification;
+	current_uvw_.v = -(x610_hardware::adcs[0].getInjectionData(peripheral::adcv2::InjectionChannel::_1) - raw_current_uvw_offset_[1]) * x610_hardware::kCurrentMagnification;
+	current_uvw_.w = -(x610_hardware::adcs[1].getInjectionData(peripheral::adcv2::InjectionChannel::_1) - raw_current_uvw_offset_[2]) * x610_hardware::kCurrentMagnification;
 
     float sin_raw = x610_hardware::sensor_value_raw[0] * x610_hardware::kADCMagnification - 1.0f;
     float cos_raw = x610_hardware::sensor_value_raw[1] * x610_hardware::kADCMagnification - 1.0f;
@@ -131,28 +117,42 @@ void BLDCMotorController::updateSensorValue() {
 		m2006_enc_.cos = 1.0f;
 	}
 
-    current_ab_.update_from_uvw(current_uvw_);
-    current_dq_.update_from_ab(current_ab_, m2006_enc_);
+    // current_ab_.update_from_uvw(current_uvw_);
+    // current_dq_.update_from_ab(current_ab_, m2006_enc_);
 
     for (auto& adc : x610_hardware::adcs) {
         adc.update();
     }
-    ctl_count_++;
-    DQ dq;
-    AB ab;
-    UVW uvw;
-    dq.d = 0.f;
-    dq.q = target_voltage_;
-    ab.update_from_dq(dq, m2006_enc_);
-    uvw.update_from_ab(ab);
+    // ctl_count_++;
+    // DQ dq;
+    // AB ab;
+    // UVW uvw;
+    // dq.d = 0.f;
+    // dq.q = target_voltage_;
+    // ab.update_from_dq(dq, m2006_enc_);
+    // uvw.update_from_ab(ab);
 
-    uvw.u = std::clamp<float>(uvw.u, -1.0, 1.0);
-    uvw.v = std::clamp<float>(uvw.v, -1.0, 1.0);
-    uvw.w = std::clamp<float>(uvw.w, -1.0, 1.0);
+    // uvw.u = std::clamp<float>(uvw.u, -1.0, 1.0);
+    // uvw.v = std::clamp<float>(uvw.v, -1.0, 1.0);
+    // uvw.w = std::clamp<float>(uvw.w, -1.0, 1.0);
 
-    x610_hardware::pwms[0].setDuty(uvw.u * kDutyMax);
-    x610_hardware::pwms[1].setDuty(uvw.w * kDutyMax);
-    x610_hardware::pwms[2].setDuty(uvw.v * kDutyMax);
+    // x610_hardware::pwms[0].setDuty(uvw.u * kDutyMax);
+    // x610_hardware::pwms[1].setDuty(uvw.v * kDutyMax);
+    // x610_hardware::pwms[2].setDuty(uvw.w * kDutyMax);
+    static uint16_t count = 0;
+    if (enable_print_) {
+        if (count++ > 10) {
+            count = 0;
+            enc_logs_[logs_count_] = m2006_enc_;
+            uvw_logs_[logs_count_++] = current_uvw_;
+
+            if (logs_count_ == 1000) {
+                enable_print_ = false;
+                x610_hardware::serial << "Finish\n";
+                logs_count_ = 0;
+            }
+        }
+    }
 }
 
 }

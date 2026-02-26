@@ -41,6 +41,12 @@ public:
             controller.setVoltage(dq_vol_);
             serial << "DQ Vol Reset\n";
         }
+        if (key == 'b') {
+            controller.enableprint();
+        }
+        if (key == 'p') {
+            controller.printSensorValue();
+        }
 
         if (count++ > 500) {
             count = 0;
