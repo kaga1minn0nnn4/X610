@@ -60,8 +60,8 @@ void main_process(void) {
     while (true) {
         debug.run();
 
-		volatile float angle_out = delay_getCount() / 170000000.0 * 2.0f * 3.14159265 * freq_out;
-        volatile float test = angle_out;
-		outputDuty(duty_out * cos(angle_out), duty_out * sin(angle_out));
+		// volatile float angle_out = delay_getCount() / 170000000.0 * 2.0f * 3.14159265 * freq_out;
+        // volatile float test = angle_out;
+		// outputDuty(duty_out * cos(angle_out), duty_out * sin(angle_out));
     }
 }

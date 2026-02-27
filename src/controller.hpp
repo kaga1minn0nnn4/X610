@@ -5,9 +5,13 @@
 
 namespace board::x610::receiver {
 
-constexpr std::array<float, 2> kVectorU = {1.0f, 0.0f};
-constexpr std::array<float, 2> kVectorV = {-0.5f, 0.86602540378f};
-constexpr std::array<float, 2> kVectorW = {-0.5f, -0.86602540378f};
+// constexpr std::array<float, 2> kVectorU = {1.0f, 0.0f};
+// constexpr std::array<float, 2> kVectorV = {-0.5f, 0.86602540378f};
+// constexpr std::array<float, 2> kVectorW = {-0.5f, -0.86602540378f};
+
+constexpr std::array<float, 2> kVectorU = {0.5f, 0.86602540378f};
+constexpr std::array<float, 2> kVectorV = {-1.0f, 0.0f};
+constexpr std::array<float, 2> kVectorW = {0.5f, -0.86602540378f};
 
 
 struct M2006EncoderValue {
@@ -67,8 +71,9 @@ public:
     float getPosition() const { return position_; }
 
     void printSensorValue() {
-        for (int i = 0 ; i < 1000 ; i++) {
+        for (size_t i = 0 ; i < enc_logs_.size() ; i++) {
             x610_hardware::serial << uvw_logs_[i].u << "," << uvw_logs_[i].v << "," << uvw_logs_[i].w << ",";
+            x610_hardware::serial << dq_logs_[i].d << "," << dq_logs_[i].q << ",";
             x610_hardware::serial << enc_logs_[i].cos << "," << enc_logs_[i].sin << "\n";
             delay_ms(1);
         }
@@ -97,8 +102,9 @@ private:
 
     std::array<float, 3> raw_current_uvw_offset_;
 
-    std::array<UVW, 1000> uvw_logs_;
-    std::array<M2006EncoderValue, 1000> enc_logs_;
+    std::array<UVW, 500> uvw_logs_;
+    std::array<M2006EncoderValue, 500> enc_logs_;
+    std::array<DQ, 500> dq_logs_;
     uint16_t logs_count_ = 0;
 
 

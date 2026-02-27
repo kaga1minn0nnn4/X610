@@ -11,8 +11,8 @@ void UVW::update_from_ab(const AB& ab) {
 
 void AB::update_from_uvw(const UVW& uvw) {
     // Clarke変換
-    a = uvw.u * kVectorU[0] + uvw.v * kVectorV[0] + uvw.w * kVectorW[0];
-    b = uvw.u * kVectorU[1] + uvw.v * kVectorV[1] + uvw.w * kVectorW[1];
+    a = (uvw.u * kVectorU[0] + uvw.v * kVectorV[0] + uvw.w * kVectorW[0]) / 1.5f;
+    b = (uvw.u * kVectorU[1] + uvw.v * kVectorV[1] + uvw.w * kVectorW[1]) / 1.5f;
 }
 
 void AB::update_from_dq(const DQ& dq, const M2006EncoderValue& enc) {
@@ -38,7 +38,7 @@ void BLDCMotorController::config() {
         opamp.enable();
     }
 
-    x610_hardware::esc_control_timer.configIT(G4::TIM::InterruptMode::update, 1, std::bind(&BLDCMotorController::controlTask, this));
+    x610_hardware::esc_control_timer.configIT(G4::TIM::InterruptMode::update, 5, std::bind(&BLDCMotorController::controlTask, this));
 
     x610_hardware::pwm_timer.setStart(true);
     x610_hardware::it_timer.setStart(true);
@@ -56,7 +56,7 @@ void BLDCMotorController::config() {
     x610_hardware::serial << raw_current_uvw_offset_[1] << ",";
     x610_hardware::serial << raw_current_uvw_offset_[2] << "\n";
 
-    // x610_hardware::esc_control_timer.setStart(true);
+    x610_hardware::esc_control_timer.setStart(true);
 }
 
 void BLDCMotorController::setVoltage(float voltage) {
@@ -64,7 +64,21 @@ void BLDCMotorController::setVoltage(float voltage) {
 }
 
 void BLDCMotorController::controlTask() {
+    DQ dq;
+    AB ab;
+    UVW uvw;
+    dq.d = 0.f;
+    dq.q = target_voltage_;
+    ab.update_from_dq(dq, m2006_enc_);
+    uvw.update_from_ab(ab);
 
+    uvw.u = std::clamp<float>(uvw.u, -1.0, 1.0);
+    uvw.v = std::clamp<float>(uvw.v, -1.0, 1.0);
+    uvw.w = std::clamp<float>(uvw.w, -1.0, 1.0);
+
+    x610_hardware::pwms[0].setDuty(uvw.u * kDutyMax);
+    x610_hardware::pwms[1].setDuty(uvw.v * kDutyMax);
+    x610_hardware::pwms[2].setDuty(uvw.w * kDutyMax);
 }
 
 void BLDCMotorController::setMotorBehavior(MotorBehavior behavior) {
@@ -117,36 +131,22 @@ void BLDCMotorController::updateSensorValue() {
 		m2006_enc_.cos = 1.0f;
 	}
 
-    // current_ab_.update_from_uvw(current_uvw_);
-    // current_dq_.update_from_ab(current_ab_, m2006_enc_);
+    current_ab_.update_from_uvw(current_uvw_);
+    current_dq_.update_from_ab(current_ab_, m2006_enc_);
 
     for (auto& adc : x610_hardware::adcs) {
         adc.update();
     }
-    // ctl_count_++;
-    // DQ dq;
-    // AB ab;
-    // UVW uvw;
-    // dq.d = 0.f;
-    // dq.q = target_voltage_;
-    // ab.update_from_dq(dq, m2006_enc_);
-    // uvw.update_from_ab(ab);
 
-    // uvw.u = std::clamp<float>(uvw.u, -1.0, 1.0);
-    // uvw.v = std::clamp<float>(uvw.v, -1.0, 1.0);
-    // uvw.w = std::clamp<float>(uvw.w, -1.0, 1.0);
-
-    // x610_hardware::pwms[0].setDuty(uvw.u * kDutyMax);
-    // x610_hardware::pwms[1].setDuty(uvw.v * kDutyMax);
-    // x610_hardware::pwms[2].setDuty(uvw.w * kDutyMax);
     static uint16_t count = 0;
     if (enable_print_) {
-        if (count++ > 10) {
+        if (count++ > 1) {
             count = 0;
             enc_logs_[logs_count_] = m2006_enc_;
+            dq_logs_[logs_count_] = current_dq_;
             uvw_logs_[logs_count_++] = current_uvw_;
 
-            if (logs_count_ == 1000) {
+            if (logs_count_ == enc_logs_.size()) {
                 enable_print_ = false;
                 x610_hardware::serial << "Finish\n";
                 logs_count_ = 0;

@@ -11,9 +11,9 @@ G4::TIM esc_control_timer{G4::TimerClockParameter::generate<G4::tim8, kEscContro
 std::array<G4::PWM, 3> pwms;
 
 std::array<G4::OpAMP, 3> opamps {
-    G4::OpAMP{G4::opamp3, G4::PB0, G4::PB2}, // u
-    G4::OpAMP{G4::opamp1, G4::PA1, G4::PA3}, // v
-    G4::OpAMP{G4::opamp2, G4::PA7, G4::PA5}, // w
+    G4::OpAMP{G4::opamp1, G4::PA1, G4::PA3}, // u
+    G4::OpAMP{G4::opamp2, G4::PA7, G4::PA5}, // v
+    G4::OpAMP{G4::opamp3, G4::PB0, G4::PB2}, // w
 };
 
 std::array<G4::ADCv2, 2> adcs {
@@ -71,9 +71,9 @@ bool config() {
     result &= pwm_timer.configOC(G4::TIM::Ch::_3, G4::TIM::PWMMode::complementary, 1.0e-6);
     serial << "TIM1 Channel1~3 init...\t" << result << "\n";
 
-    result &= pwms[0].config(pwm_timer.createChannel(G4::TIM::Ch::_1), G4::PA8, G4::PB13);
-    result &= pwms[1].config(pwm_timer.createChannel(G4::TIM::Ch::_3), G4::PA10, G4::PB15);
-    result &= pwms[2].config(pwm_timer.createChannel(G4::TIM::Ch::_2), G4::PA9, G4::PB14);
+    result &= pwms[0].config(pwm_timer.createChannel(G4::TIM::Ch::_3), G4::PA8, G4::PB13);
+    result &= pwms[1].config(pwm_timer.createChannel(G4::TIM::Ch::_2), G4::PA10, G4::PB15);
+    result &= pwms[2].config(pwm_timer.createChannel(G4::TIM::Ch::_1), G4::PA9, G4::PB14);
     serial << "PWM init...\t" << result << "\n";
 
     for (auto& opamp : opamps) {
