@@ -2,30 +2,8 @@
 
 namespace board::x610::receiver {
 
-
-void UVW::update_from_ab(const AB& ab) {
-    u = ab.a * kVectorU[0] + ab.b * kVectorU[1];
-    v = ab.a * kVectorV[0] + ab.b * kVectorV[1];
-    w = ab.a * kVectorW[0] + ab.b * kVectorW[1];
-}
-
-void AB::update_from_uvw(const UVW& uvw) {
-    // Clarke変換
-    a = (uvw.u * kVectorU[0] + uvw.v * kVectorV[0] + uvw.w * kVectorW[0]) / 1.5f;
-    b = (uvw.u * kVectorU[1] + uvw.v * kVectorV[1] + uvw.w * kVectorW[1]) / 1.5f;
-}
-
-void AB::update_from_dq(const DQ& dq, const M2006EncoderValue& enc) {
-    a = dq.d * enc.cos - dq.q * enc.sin;
-    b = dq.d * enc.sin + dq.q * enc.cos;
-}
-
-void DQ::update_from_ab(const AB& ab, const M2006EncoderValue& enc) {
-    d = ab.a * enc.cos + ab.b * enc.sin;
-    q = -ab.a * enc.sin + ab.b * enc.cos;
-}
-
 void BLDCMotorController::config() {
+    x610_hardware::adcs[0].configIT(std::bind(&BLDCMotorController::trgoHandler, this));
 
     for (auto& adc : x610_hardware::adcs) {
         adc.calibration();
@@ -37,8 +15,6 @@ void BLDCMotorController::config() {
     for (auto& opamp : x610_hardware::opamps) {
         opamp.enable();
     }
-
-    x610_hardware::esc_control_timer.configIT(G4::TIM::InterruptMode::update, 5, std::bind(&BLDCMotorController::controlTask, this));
 
     x610_hardware::pwm_timer.setStart(true);
     x610_hardware::it_timer.setStart(true);
@@ -56,7 +32,6 @@ void BLDCMotorController::config() {
     x610_hardware::serial << raw_current_uvw_offset_[1] << ",";
     x610_hardware::serial << raw_current_uvw_offset_[2] << "\n";
 
-    x610_hardware::esc_control_timer.setStart(true);
 }
 
 void BLDCMotorController::setVoltage(float voltage) {
@@ -64,9 +39,9 @@ void BLDCMotorController::setVoltage(float voltage) {
 }
 
 void BLDCMotorController::controlTask() {
-    DQ dq;
-    AB ab;
-    UVW uvw;
+    x610_common::DQ dq;
+    x610_common::AB ab;
+    x610_common::UVW uvw;
     dq.d = 0.f;
     dq.q = target_voltage_;
     ab.update_from_dq(dq, m2006_enc_);
@@ -130,6 +105,8 @@ void BLDCMotorController::updateSensorValue() {
 		m2006_enc_.sin = 0.0f;
 		m2006_enc_.cos = 1.0f;
 	}
+    m2006_enc_.update_angle();
+    position_ = m2006_enc_.angle;
 
     current_ab_.update_from_uvw(current_uvw_);
     current_dq_.update_from_ab(current_ab_, m2006_enc_);

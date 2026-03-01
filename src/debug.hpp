@@ -27,12 +27,12 @@ public:
         }
 
         if (key == '+') {
-            dq_vol_ += 0.0005;
+            dq_vol_ += 0.005;
             controller.setVoltage(dq_vol_);
             serial << "DQ Vol: " << dq_vol_ << "\n";
         }
         if (key == '-') {
-            dq_vol_ -= 0.0005;
+            dq_vol_ -= 0.005;
             controller.setVoltage(dq_vol_);
             serial << "DQ Vol: " << dq_vol_ << "\n";
         }

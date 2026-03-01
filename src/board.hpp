@@ -19,7 +19,6 @@ namespace x610_hardware {
 
 constexpr uint32_t kTimerInterruptFreq = 1000;
 constexpr uint32_t kPWMTimerFreq = 40000;
-constexpr uint32_t kEscControlFreq = 10000;
 
 constexpr uint32_t kOpampGain = 16;
 constexpr float kADCMagnification = 3.3 / 4095.f;
@@ -29,7 +28,6 @@ constexpr float kCurrentMagnification = kADCMagnification / 16.0 * 1700 / 12.0;
 extern G4::UART serial;
 extern G4::TIM it_timer;
 extern G4::TIM pwm_timer;
-extern G4::TIM esc_control_timer;
 extern std::array<G4::PWM, 3> pwms;
 extern std::array<G4::OpAMP, 3> opamps;
 extern std::array<G4::ADCv2, 2> adcs;

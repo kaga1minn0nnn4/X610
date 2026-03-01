@@ -2,50 +2,10 @@
 
 #include "RUR_CANBoard_Base/board/X610.hpp"
 #include "board.hpp"
+#include "common.hpp"
 
 namespace board::x610::receiver {
 
-// constexpr std::array<float, 2> kVectorU = {1.0f, 0.0f};
-// constexpr std::array<float, 2> kVectorV = {-0.5f, 0.86602540378f};
-// constexpr std::array<float, 2> kVectorW = {-0.5f, -0.86602540378f};
-
-constexpr std::array<float, 2> kVectorU = {0.5f, 0.86602540378f};
-constexpr std::array<float, 2> kVectorV = {-1.0f, 0.0f};
-constexpr std::array<float, 2> kVectorW = {0.5f, -0.86602540378f};
-
-
-struct M2006EncoderValue {
-    float cos;
-    float sin;
-};
-
-struct UVW;
-struct AB;
-struct DQ;
-
-struct UVW {
-    float u;
-    float v;
-    float w;
-
-    void update_from_ab(const AB& ab);
-};
-
-struct AB {
-    float a;
-    float b;
-
-    void update_from_uvw(const UVW& uvw);
-
-    void update_from_dq(const DQ& dq, const M2006EncoderValue& enc);
-};
-
-struct DQ {
-    float d;
-    float q;
-
-    void update_from_ab(const AB& ab, const M2006EncoderValue& enc);
-};
 
 class BLDCMotorController {
     static constexpr uint16_t kDutyMax = 90;
@@ -90,6 +50,11 @@ public:
 private:
     void controlTask();
 
+    void trgoHandler() {
+        updateSensorValue();
+        controlTask();
+    }
+
     void enableDriver();
     void disableDriver();
 
@@ -102,17 +67,17 @@ private:
 
     std::array<float, 3> raw_current_uvw_offset_;
 
-    std::array<UVW, 500> uvw_logs_;
-    std::array<M2006EncoderValue, 500> enc_logs_;
-    std::array<DQ, 500> dq_logs_;
+    std::array<x610_common::UVW, 500> uvw_logs_;
+    std::array<x610_common::M2006EncoderValue, 500> enc_logs_;
+    std::array<x610_common::DQ, 500> dq_logs_;
     uint16_t logs_count_ = 0;
 
 
-    UVW current_uvw_;
-    AB current_ab_;
-    DQ current_dq_;
+    x610_common::UVW current_uvw_;
+    x610_common::AB current_ab_;
+    x610_common::DQ current_dq_;
 
-    M2006EncoderValue m2006_enc_;
+    x610_common::M2006EncoderValue m2006_enc_;
 
     float raw_cos_;
     float raw_sin_;

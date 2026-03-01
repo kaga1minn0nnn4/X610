@@ -6,7 +6,6 @@ G4::UART serial{G4::uart3, G4::PC10, G4::PC11};
 
 G4::TIM it_timer{G4::TimerClockParameter::generate<G4::tim2, kTimerInterruptFreq>()};
 G4::TIM pwm_timer{G4::TimerClockParameter::generate<G4::tim1, kPWMTimerFreq>()};
-G4::TIM esc_control_timer{G4::TimerClockParameter::generate<G4::tim8, kEscControlFreq>()};
 
 std::array<G4::PWM, 3> pwms;
 
@@ -62,18 +61,14 @@ bool config() {
     result &= pwm_timer.config(peripheral::tim::CounterMode::triangle, 1);
     serial << "TIM1 init...\t" << result << "\n";
 
-    result &= esc_control_timer.config();
-    // result &= G4::itTimerConfig(esc_control_timer, 1, ctl_timer_task);
-    serial << "TIM8 init...\t" << result << "\n";
-
     result &= pwm_timer.configOC(G4::TIM::Ch::_1, G4::TIM::PWMMode::complementary, 1.0e-6);
     result &= pwm_timer.configOC(G4::TIM::Ch::_2, G4::TIM::PWMMode::complementary, 1.0e-6);
     result &= pwm_timer.configOC(G4::TIM::Ch::_3, G4::TIM::PWMMode::complementary, 1.0e-6);
     serial << "TIM1 Channel1~3 init...\t" << result << "\n";
 
-    result &= pwms[0].config(pwm_timer.createChannel(G4::TIM::Ch::_3), G4::PA8, G4::PB13);
-    result &= pwms[1].config(pwm_timer.createChannel(G4::TIM::Ch::_2), G4::PA10, G4::PB15);
-    result &= pwms[2].config(pwm_timer.createChannel(G4::TIM::Ch::_1), G4::PA9, G4::PB14);
+    result &= pwms[2].config(pwm_timer.createChannel(G4::TIM::Ch::_3), G4::PA10, G4::PB15);
+    result &= pwms[0].config(pwm_timer.createChannel(G4::TIM::Ch::_2), G4::PA9, G4::PB14);
+    result &= pwms[1].config(pwm_timer.createChannel(G4::TIM::Ch::_1), G4::PA8, G4::PB13);
     serial << "PWM init...\t" << result << "\n";
 
     for (auto& opamp : opamps) {
@@ -83,7 +78,6 @@ bool config() {
 
     result &= adcs[0].config({LL_ADC_CHANNEL_11, LL_ADC_CHANNEL_14}, {LL_ADC_CHANNEL_VOPAMP1}, sensor_value_raw, LL_ADC_SAMPLINGTIME_2CYCLES_5);
     result &= adcs[1].config({}, {LL_ADC_CHANNEL_VOPAMP2, LL_ADC_CHANNEL_VOPAMP3_ADC2}, dummy, LL_ADC_SAMPLINGTIME_2CYCLES_5);
-    adcs[0].configIT(adc_task);
     serial << "ADCv2 init...\t" << result << "\n";
 
     result &= canfd.config(peripheral::canfd::Format::fd, peripheral::canfd::Mode::normal, 5e6, 5e6);
