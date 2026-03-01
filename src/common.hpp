@@ -23,10 +23,16 @@ struct M2006EncoderValue {
     float cos;
     float sin;
     float angle;
+    float angle_offset;
 
     void update_angle() {
-        angle = atan2(sin, cos);
+        angle = atan2(sin, cos) - angle_offset;
     }
+
+    void reset_offset() {
+        angle_offset = 0;
+    }
+
 };
 
 struct UVW;

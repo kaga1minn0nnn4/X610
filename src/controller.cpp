@@ -47,10 +47,18 @@ void BLDCMotorController::controlTask() {
     x610_common::DQ dq;
     x610_common::AB ab;
     x610_common::UVW uvw;
-    dq.d = 0.0f;
-    dq.q = target_voltage_;
-    ab.update_from_dq(dq, m2006_enc_);
-    uvw.update_from_ab(ab);
+
+
+    if (is_calibration_) {
+        ab.a = 0.1;
+        ab.b = 0.0;
+        uvw.update_from_ab(ab);
+    } else {
+        dq.d = 0.0f;
+        dq.q = target_voltage_;
+        ab.update_from_dq(dq, m2006_enc_);
+        uvw.update_from_ab(ab);
+    }
 
     uvw.u = std::clamp<float>(uvw.u, -1.0, 1.0);
     uvw.v = std::clamp<float>(uvw.v, -1.0, 1.0);
@@ -103,9 +111,9 @@ void BLDCMotorController::disableDriver() {
 }
 
 void BLDCMotorController::updateSensorValue() {
-	current_uvw_.u = -(x610_hardware::adcs[1].getInjectionData(peripheral::adcv2::InjectionChannel::_1) - raw_current_uvw_offset_[0]) * x610_hardware::kCurrentMagnification;
-	current_uvw_.w = -(x610_hardware::adcs[0].getInjectionData(peripheral::adcv2::InjectionChannel::_1) - raw_current_uvw_offset_[1]) * x610_hardware::kCurrentMagnification;
-	current_uvw_.v = -(x610_hardware::adcs[1].getInjectionData(peripheral::adcv2::InjectionChannel::_2) - raw_current_uvw_offset_[2]) * x610_hardware::kCurrentMagnification;
+	current_uvw_.u = -(x610_hardware::adcs[1].getInjectionData(peripheral::adcv2::InjectionChannel::_2) - raw_current_uvw_offset_[2]) * x610_hardware::kCurrentMagnification;
+	current_uvw_.v = -(x610_hardware::adcs[0].getInjectionData(peripheral::adcv2::InjectionChannel::_1) - raw_current_uvw_offset_[1]) * x610_hardware::kCurrentMagnification;
+	current_uvw_.w = -(x610_hardware::adcs[1].getInjectionData(peripheral::adcv2::InjectionChannel::_1) - raw_current_uvw_offset_[0]) * x610_hardware::kCurrentMagnification;
 
     float sin_raw = x610_hardware::sensor_value_raw[0] * x610_hardware::kADCMagnification - 1.0f;
     float cos_raw = x610_hardware::sensor_value_raw[1] * x610_hardware::kADCMagnification - 1.0f;

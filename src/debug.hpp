@@ -47,6 +47,9 @@ public:
         if (key == 'p') {
             controller.printSensorValue();
         }
+        if (key == 'c') {
+            controller.calibration();
+        }
 
         if (count++ > 500) {
             count = 0;

@@ -28,13 +28,32 @@ public:
 
     float getCurrent() const { return current_; }
     float getVelocity() const { return velocity_; }
+
+    void calibration() {
+        x610_hardware::serial << "Calibration..." << "\n";
+
+        m2006_enc_.reset_offset();
+        is_calibration_ = true;
+        enableDriver();
+
+        delay_ms(500);
+
+        m2006_enc_.angle_offset = m2006_enc_.angle;
+
+        disableDriver();
+
+        x610_hardware::serial << "Encoder offset: " << m2006_enc_.angle_offset << "\n";
+
+        is_calibration_ = false;
+    }
+
     float getPosition() const { return position_; }
 
     void printSensorValue() {
         for (size_t i = 0 ; i < enc_logs_.size() ; i++) {
-            // x610_hardware::serial << uvw_logs_[i].u << "," << uvw_logs_[i].v << "," << uvw_logs_[i].w << ",";
-            x610_hardware::serial << dq_logs_[i].d << "," << dq_logs_[i].q << "\n";
-            // x610_hardware::serial << enc_logs_[i].cos << "," << enc_logs_[i].sin << "\n";
+            x610_hardware::serial << uvw_logs_[i].u << "," << uvw_logs_[i].v << "," << uvw_logs_[i].w << ",";
+            // x610_hardware::serial << dq_logs_[i].d << "," << dq_logs_[i].q << "\n";
+            x610_hardware::serial << enc_logs_[i].angle << "\n";
             delay_ms(1);
         }
     }
@@ -60,6 +79,8 @@ private:
 
 private:
     bool enable_print_ = false;
+
+    bool is_calibration_ = false;
 
     float current_ = 0.f;
     float velocity_ = 0.f;

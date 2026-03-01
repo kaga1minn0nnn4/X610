@@ -22,8 +22,7 @@ constexpr uint32_t kPWMTimerFreq = 40000;
 
 constexpr uint32_t kOpampGain = 16;
 constexpr float kADCMagnification = 3.3 / 4095.f;
-// constexpr float kCurrentMagnification = kADCMagnification / 10.6667 / 0.003;
-constexpr float kCurrentMagnification = kADCMagnification / 16.0 * 1700 / 12.0;
+constexpr float kCurrentMagnification = kADCMagnification / 10.6667 / 0.003;
 
 extern G4::UART serial;
 extern G4::TIM it_timer;

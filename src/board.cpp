@@ -61,9 +61,9 @@ bool config() {
     result &= pwm_timer.config(peripheral::tim::CounterMode::triangle, 1);
     serial << "TIM1 init...\t" << result << "\n";
 
-    result &= pwm_timer.configOC(G4::TIM::Ch::_1, G4::TIM::PWMMode::complementary, 1.0e-6);
-    result &= pwm_timer.configOC(G4::TIM::Ch::_2, G4::TIM::PWMMode::complementary, 1.0e-6);
-    result &= pwm_timer.configOC(G4::TIM::Ch::_3, G4::TIM::PWMMode::complementary, 1.0e-6);
+    result &= pwm_timer.configOC(G4::TIM::Ch::_1, G4::TIM::PWMMode::complementary, 0.8e-6);
+    result &= pwm_timer.configOC(G4::TIM::Ch::_2, G4::TIM::PWMMode::complementary, 0.8e-6);
+    result &= pwm_timer.configOC(G4::TIM::Ch::_3, G4::TIM::PWMMode::complementary, 0.8e-6);
     serial << "TIM1 Channel1~3 init...\t" << result << "\n";
 
     result &= pwms[0].config(pwm_timer.createChannel(G4::TIM::Ch::_2), G4::PA9, G4::PB14);
