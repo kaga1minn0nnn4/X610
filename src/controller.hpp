@@ -79,8 +79,12 @@ public:
     }
 
     void enableprint() {
-        x610_hardware::serial << "Begin...\n";
+        // x610_hardware::serial << "Begin...\n";
         enable_print_ = true;
+    }
+
+    void disableprint() {
+        enable_print_ = false;
     }
 
 

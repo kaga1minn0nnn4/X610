@@ -44,6 +44,9 @@ public:
         if (key == 'b') {
             controller.enableprint();
         }
+        if (key == 'v') {
+            controller.disableprint();
+        }
         if (key == 'p') {
             controller.printSensorValue();
         }

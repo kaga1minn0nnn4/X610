@@ -77,7 +77,7 @@ void BLDCMotorController::controlTask() {
     x610_hardware::pwms[2].setDuty(- uvw.w * kDutyMax);
 
     static uint32_t count = 0;
-    if (count++ > 2000) {
+    if (count++ > 2000 && enable_print_) {
         count = 0;
         x610_hardware::serial << current_dq_.d << ", " << current_dq_.q << "\n";
         // x610_hardware::serial << m2006_enc_.angle << "\n";
