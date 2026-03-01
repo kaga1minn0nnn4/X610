@@ -2,6 +2,10 @@
 
 namespace x610_common {
 
+std::array<float, 2> kVectorU = {cos(u_angle), sin(u_angle)};
+std::array<float, 2> kVectorV = {cos(v_angle), sin(v_angle)};
+std::array<float, 2> kVectorW = {cos(w_angle), sin(w_angle)};
+
 void UVW::update_from_ab(const AB& ab) {
     u = ab.a * kVectorU[0] + ab.b * kVectorU[1];
     v = ab.a * kVectorV[0] + ab.b * kVectorV[1];
@@ -15,13 +19,21 @@ void AB::update_from_uvw(const UVW& uvw) {
 }
 
 void AB::update_from_dq(const DQ& dq, const M2006EncoderValue& enc) {
-    a = dq.d * enc.cos - dq.q * enc.sin;
-    b = dq.d * enc.sin + dq.q * enc.cos;
+    float theta = enc.angle - 0.39;
+    float c = cos(theta);
+    float s = sin(theta);
+    a = dq.d * c - dq.q * s;
+    b = dq.d * s + dq.q * c;
+    // a = 0.1;
+    // b = 0.0;
 }
 
 void DQ::update_from_ab(const AB& ab, const M2006EncoderValue& enc) {
-    d = ab.a * enc.cos + ab.b * enc.sin;
-    q = -ab.a * enc.sin + ab.b * enc.cos;
+    float theta = enc.angle - 0.39;
+    float c = cos(theta);
+    float s = sin(theta);
+    d = ab.a * c + ab.b * s;
+    q = -ab.a * s + ab.b * c;
 }
 
 }

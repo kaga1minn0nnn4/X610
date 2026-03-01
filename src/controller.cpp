@@ -22,15 +22,20 @@ void BLDCMotorController::config() {
     delay_ms(1000);
 
     for (int i = 0; i < 10; i++) {
-        raw_current_uvw_offset_[0] += x610_hardware::adcs[1].getInjectionData(peripheral::adcv2::InjectionChannel::_2) / 10.0f; // u
+        raw_current_uvw_offset_[0] += x610_hardware::adcs[1].getInjectionData(peripheral::adcv2::InjectionChannel::_1) / 10.0f; // u
         raw_current_uvw_offset_[1] += x610_hardware::adcs[0].getInjectionData(peripheral::adcv2::InjectionChannel::_1) / 10.0f; // v
-        raw_current_uvw_offset_[2] += x610_hardware::adcs[1].getInjectionData(peripheral::adcv2::InjectionChannel::_1) / 10.0f; // w
+        raw_current_uvw_offset_[2] += x610_hardware::adcs[1].getInjectionData(peripheral::adcv2::InjectionChannel::_2) / 10.0f; // w
         delay_ms(100);
     }
     x610_hardware::serial << "Offset: \n";
     x610_hardware::serial << raw_current_uvw_offset_[0] << ",";
     x610_hardware::serial << raw_current_uvw_offset_[1] << ",";
     x610_hardware::serial << raw_current_uvw_offset_[2] << "\n";
+
+    x610_hardware::serial << "Vector: \n";
+    x610_hardware::serial << "U: " << x610_common::kVectorU[0] << ", " << x610_common::kVectorU[1] << "\n";
+    x610_hardware::serial << "V: " << x610_common::kVectorV[0] << ", " << x610_common::kVectorV[1] << "\n";
+    x610_hardware::serial << "W: " << x610_common::kVectorW[0] << ", " << x610_common::kVectorW[1] << "\n";
 
 }
 
@@ -42,7 +47,7 @@ void BLDCMotorController::controlTask() {
     x610_common::DQ dq;
     x610_common::AB ab;
     x610_common::UVW uvw;
-    dq.d = 0.f;
+    dq.d = 0.0f;
     dq.q = target_voltage_;
     ab.update_from_dq(dq, m2006_enc_);
     uvw.update_from_ab(ab);
@@ -59,6 +64,7 @@ void BLDCMotorController::controlTask() {
     if (count++ > 2000) {
         count = 0;
         // x610_hardware::serial << current_dq_.d << ", " << current_dq_.q << "\n";
+        // x610_hardware::serial << m2006_enc_.angle << "\n";
     }
 }
 
@@ -97,9 +103,9 @@ void BLDCMotorController::disableDriver() {
 }
 
 void BLDCMotorController::updateSensorValue() {
-	current_uvw_.u = -(x610_hardware::adcs[1].getInjectionData(peripheral::adcv2::InjectionChannel::_2) - raw_current_uvw_offset_[0]) * x610_hardware::kCurrentMagnification;
-	current_uvw_.v = -(x610_hardware::adcs[0].getInjectionData(peripheral::adcv2::InjectionChannel::_1) - raw_current_uvw_offset_[1]) * x610_hardware::kCurrentMagnification;
-	current_uvw_.w = -(x610_hardware::adcs[1].getInjectionData(peripheral::adcv2::InjectionChannel::_1) - raw_current_uvw_offset_[2]) * x610_hardware::kCurrentMagnification;
+	current_uvw_.u = -(x610_hardware::adcs[1].getInjectionData(peripheral::adcv2::InjectionChannel::_1) - raw_current_uvw_offset_[0]) * x610_hardware::kCurrentMagnification;
+	current_uvw_.w = -(x610_hardware::adcs[0].getInjectionData(peripheral::adcv2::InjectionChannel::_1) - raw_current_uvw_offset_[1]) * x610_hardware::kCurrentMagnification;
+	current_uvw_.v = -(x610_hardware::adcs[1].getInjectionData(peripheral::adcv2::InjectionChannel::_2) - raw_current_uvw_offset_[2]) * x610_hardware::kCurrentMagnification;
 
     float sin_raw = x610_hardware::sensor_value_raw[0] * x610_hardware::kADCMagnification - 1.0f;
     float cos_raw = x610_hardware::sensor_value_raw[1] * x610_hardware::kADCMagnification - 1.0f;
@@ -121,19 +127,15 @@ void BLDCMotorController::updateSensorValue() {
         adc.update();
     }
 
-    static uint16_t count = 0;
     if (enable_print_) {
-        if (count++ > 1) {
-            count = 0;
-            enc_logs_[logs_count_] = m2006_enc_;
-            dq_logs_[logs_count_] = current_dq_;
-            uvw_logs_[logs_count_++] = current_uvw_;
+        enc_logs_[logs_count_] = m2006_enc_;
+        dq_logs_[logs_count_] = current_dq_;
+        uvw_logs_[logs_count_++] = current_uvw_;
 
-            if (logs_count_ == enc_logs_.size()) {
-                enable_print_ = false;
-                x610_hardware::serial << "Finish\n";
-                logs_count_ = 0;
-            }
+        if (logs_count_ == enc_logs_.size()) {
+            enable_print_ = false;
+            x610_hardware::serial << "Finish\n";
+            logs_count_ = 0;
         }
     }
 }
