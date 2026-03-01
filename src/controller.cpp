@@ -54,6 +54,12 @@ void BLDCMotorController::controlTask() {
     x610_hardware::pwms[0].setDuty(uvw.u * kDutyMax);
     x610_hardware::pwms[1].setDuty(uvw.v * kDutyMax);
     x610_hardware::pwms[2].setDuty(uvw.w * kDutyMax);
+
+    static uint32_t count = 0;
+    if (count++ > 2000) {
+        count = 0;
+        // x610_hardware::serial << current_dq_.d << ", " << current_dq_.q << "\n";
+    }
 }
 
 void BLDCMotorController::setMotorBehavior(MotorBehavior behavior) {

@@ -32,9 +32,9 @@ public:
 
     void printSensorValue() {
         for (size_t i = 0 ; i < enc_logs_.size() ; i++) {
-            x610_hardware::serial << uvw_logs_[i].u << "," << uvw_logs_[i].v << "," << uvw_logs_[i].w << ",";
-            x610_hardware::serial << dq_logs_[i].d << "," << dq_logs_[i].q << ",";
-            x610_hardware::serial << enc_logs_[i].cos << "," << enc_logs_[i].sin << "\n";
+            x610_hardware::serial << uvw_logs_[i].u << "," << uvw_logs_[i].v << "," << uvw_logs_[i].w << "\n";
+            // x610_hardware::serial << dq_logs_[i].d << "," << dq_logs_[i].q << ",";
+            // x610_hardware::serial << enc_logs_[i].cos << "," << enc_logs_[i].sin << "\n";
             delay_ms(1);
         }
     }
