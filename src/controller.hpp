@@ -3,14 +3,34 @@
 #include "RUR_CANBoard_Base/board/X610.hpp"
 #include "board.hpp"
 #include "common.hpp"
+#include "RUR_STM_CommonLib/PIDLib/PID.hpp"
 
 namespace board::x610::receiver {
 
+constexpr BackCalculationPI_D::Parameter d_param = {
+    .kp = 0.03,
+    .ki = 20.0f,
+    .kd = 0.0f,
+    .control_frequency = 20000.f,
+    .manipulated_value_limit = 1.0f,
+    .feed_forward = 0.0f
+};
+
+constexpr BackCalculationPI_D::Parameter q_param = {
+    .kp = 0.03,
+    .ki = 20.0f,
+    .kd = 0.0f,
+    .control_frequency = 20000.f,
+    .manipulated_value_limit = 1.0f,
+    .feed_forward = 0.0f
+};
 
 class BLDCMotorController {
     static constexpr uint16_t kDutyMax = 90;
 
 public:
+    BLDCMotorController() : d_pid_(d_param), q_pid_(q_param) {}
+
     void config();
 
     void calculateSpeedResponse(float current, float time);
@@ -51,9 +71,9 @@ public:
 
     void printSensorValue() {
         for (size_t i = 0 ; i < enc_logs_.size() ; i++) {
-            x610_hardware::serial << uvw_logs_[i].u << "," << uvw_logs_[i].v << "," << uvw_logs_[i].w << ",";
-            // x610_hardware::serial << dq_logs_[i].d << "," << dq_logs_[i].q << "\n";
-            x610_hardware::serial << enc_logs_[i].angle << "\n";
+            // x610_hardware::serial << uvw_logs_[i].u << "," << uvw_logs_[i].v << "," << uvw_logs_[i].w << ",";
+            x610_hardware::serial << dq_logs_[i].d << "," << dq_logs_[i].q << "\n";
+            // x610_hardware::serial << enc_logs_[i].angle << "\n";
             delay_ms(1);
         }
     }
@@ -106,6 +126,9 @@ private:
     float target_voltage_;
 
     uint32_t ctl_count_;
+
+    BackCalculationPI_D d_pid_;
+    BackCalculationPI_D q_pid_;
 };
 
 }

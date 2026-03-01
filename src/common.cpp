@@ -24,6 +24,8 @@ void AB::update_from_dq(const DQ& dq, const M2006EncoderValue& enc) {
     float s = sin(theta);
     a = dq.d * c - dq.q * s;
     b = dq.d * s + dq.q * c;
+    // a = dq.d * enc.cos - dq.q * enc.sin;
+    // b = dq.d * enc.sin + dq.q * enc.cos;
 }
 
 void DQ::update_from_ab(const AB& ab, const M2006EncoderValue& enc) {
