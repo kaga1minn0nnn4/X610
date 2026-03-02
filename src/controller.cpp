@@ -37,10 +37,7 @@ void BLDCMotorController::config() {
     x610_hardware::serial << "V: " << x610_common::kVectorV[0] << ", " << x610_common::kVectorV[1] << "\n";
     x610_hardware::serial << "W: " << x610_common::kVectorW[0] << ", " << x610_common::kVectorW[1] << "\n";
 
-}
-
-void BLDCMotorController::setVoltage(float voltage) {
-    target_voltage_ = voltage;
+    is_configuration_ = false;
 }
 
 void BLDCMotorController::controlTask() {
@@ -75,13 +72,6 @@ void BLDCMotorController::controlTask() {
     x610_hardware::pwms[0].setDuty(- uvw.u * kDutyMax);
     x610_hardware::pwms[1].setDuty(- uvw.v * kDutyMax);
     x610_hardware::pwms[2].setDuty(- uvw.w * kDutyMax);
-
-    static uint32_t count = 0;
-    if (count++ > 2000 && enable_print_) {
-        count = 0;
-        x610_hardware::serial << current_dq_.d << ", " << current_dq_.q << "\n";
-        // x610_hardware::serial << m2006_enc_.angle << "\n";
-    }
 }
 
 void BLDCMotorController::setMotorBehavior(MotorBehavior behavior) {
@@ -144,18 +134,6 @@ void BLDCMotorController::updateSensorValue() {
     for (auto& adc : x610_hardware::adcs) {
         adc.update();
     }
-
-    // if (enable_print_) {
-    //     enc_logs_[logs_count_] = m2006_enc_;
-    //     dq_logs_[logs_count_] = current_dq_;
-    //     uvw_logs_[logs_count_++] = current_uvw_;
-
-    //     if (logs_count_ == enc_logs_.size()) {
-    //         enable_print_ = false;
-    //         x610_hardware::serial << "Finish\n";
-    //         logs_count_ = 0;
-    //     }
-    // }
 }
 
 }

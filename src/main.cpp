@@ -12,17 +12,12 @@ void x610_hardware::it_timer_task() {
         user_led.toggle();
 
         // controller.printSensorValue();
-        controller.resetcount();
     }
 
     static uint32_t sensor_count = 0;
     if (sensor_count++ > 100) {
         sensor_count = 0;
     }
-}
-
-void x610_hardware::adc_task() {
-    controller.updateSensorValue();
 }
 
 bool sw_status_last = false;
