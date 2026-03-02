@@ -45,8 +45,14 @@ public:
             controller.calibration();
         }
 
-        if (count++ > 500) {
+        if (key == 'p') {
+            enable_print_ = !enable_print_;
+        }
+
+
+        if (count++ > 500 && enable_print_) {
             count = 0;
+            x610_hardware::serial << controller.getCurrentD() << ", " << controller.getCurrentQ() << "\n";
         }
     }
 
@@ -54,6 +60,8 @@ private:
     float dq_vol_;
     bool sw_status_last_;
     bool driver_status_;
+
+    bool enable_print_;
 };
 
 }

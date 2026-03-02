@@ -34,6 +34,7 @@ enum class ControlMode {
 
 class BLDCMotorController {
     static constexpr uint16_t kDutyMax = 90;
+    static constexpr float kLPFAlpha = 0.3;
 
 public:
     BLDCMotorController() : d_pid_(d_param), q_pid_(q_param) {}
@@ -73,23 +74,7 @@ public:
     float getVelocity() const { return velocity_; }
     float getPosition() const { return position_; }
 
-    void calibration() {
-        x610_hardware::serial << "Calibration..." << "\n";
-
-        m2006_enc_.reset_offset();
-        is_calibration_ = true;
-        enableDriver();
-
-        delay_ms(500);
-
-        m2006_enc_.angle_offset = m2006_enc_.angle;
-
-        disableDriver();
-
-        x610_hardware::serial << "Encoder offset: " << m2006_enc_.angle_offset << "\n";
-
-        is_calibration_ = false;
-    }
+    void calibration();
 
     uint32_t getControlCount() {return ctl_count_;}
 

@@ -147,7 +147,12 @@ void BLDCMotorController::updateSensorValue() {
     position_ = m2006_enc_.angle;
 
     current_ab_.update_from_uvw(current_uvw_);
-    current_dq_.update_from_ab(current_ab_, m2006_enc_);
+
+    x610_common::DQ current_dq_raw;
+    current_dq_raw.update_from_ab(current_ab_, m2006_enc_);
+    // LPF
+    current_dq_.d = current_dq_raw.d * kLPFAlpha + current_dq_.d * (1 - kLPFAlpha);
+    current_dq_.q = current_dq_raw.q * kLPFAlpha + current_dq_.q * (1 - kLPFAlpha);
 
     for (auto& adc : x610_hardware::adcs) {
         adc.update();
