@@ -16,16 +16,16 @@ void AB::update_from_uvw(const UVW& uvw) {
 
 void AB::update_from_dq(const DQ& dq, const M2006EncoderValue& enc) {
     float theta = enc.angle;
-    float c = cos(theta);
-    float s = sin(theta);
+    float c = dsp_math::cos(theta);
+    float s = dsp_math::sin(theta);
     a = dq.d * c - dq.q * s;
     b = dq.d * s + dq.q * c;
 }
 
 void DQ::update_from_ab(const AB& ab, const M2006EncoderValue& enc) {
     float theta = enc.angle;
-    float c = cos(theta);
-    float s = sin(theta);
+    float c = dsp_math::cos(theta);
+    float s = dsp_math::sin(theta);
     d = ab.a * c + ab.b * s;
     q = -ab.a * s + ab.b * c;
 }

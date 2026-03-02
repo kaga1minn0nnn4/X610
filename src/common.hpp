@@ -1,9 +1,16 @@
 #pragma once
 
 #include <array>
-#include <math.h>
 
-#include "RUR_STM_CommonLib/math/units.hpp"
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "arm_math.h"
+
+#ifdef __cplusplus
+}
+#endif
 
 namespace x610_common {
 
@@ -54,5 +61,23 @@ struct DQ {
 
     void update_from_ab(const AB& ab, const M2006EncoderValue& enc);
 };
+
+}
+
+namespace dsp_math {
+
+inline float sqrt(float x) {
+    float result;
+    arm_sqrt_f32(x, &result);
+    return result;
+}
+
+inline float sin(float x) {
+    return arm_sin_f32(x);
+}
+
+inline float cos(float x) {
+    return arm_cos_f32(x);
+}
 
 }

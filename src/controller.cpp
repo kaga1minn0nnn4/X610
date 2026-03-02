@@ -53,7 +53,7 @@ void BLDCMotorController::controlTask() {
         ab.b = 0.0;
         uvw.update_from_ab(ab);
     } else {
-        float norm = sqrt(d_man_value*d_man_value + q_man_value*q_man_value);
+        float norm = dsp_math::sqrt(d_man_value*d_man_value + q_man_value*q_man_value);
         if (norm > 1.0) {
             d_man_value /= norm;
             q_man_value /= norm;
@@ -117,7 +117,7 @@ void BLDCMotorController::updateSensorValue() {
 
     float cos_raw = x610_hardware::sensor_value_raw[0] * x610_hardware::kADCMagnification - 1.0f;
     float sin_raw = x610_hardware::sensor_value_raw[1] * x610_hardware::kADCMagnification - 1.0f;
-    float norm = sqrt(sin_raw*sin_raw + cos_raw*cos_raw);
+    float norm = dsp_math::sqrt(sin_raw*sin_raw + cos_raw*cos_raw);
 	if (norm > 0.0f) {
 		m2006_enc_.sin = sin_raw / norm;
 		m2006_enc_.cos = cos_raw / norm;

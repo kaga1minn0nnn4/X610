@@ -40,6 +40,12 @@ file(GLOB_RECURSE USER_LIB_SOURCES
     "userlib/*.c"
 )
 
+# Add CMSIS-DSP Source files
+set(DSP_SOURCES
+    "Drivers/CMSIS/DSP/Source/CommonTables/CommonTables.c"
+    "Drivers/CMSIS/DSP/Source/FastMathFunctions/FastMathFunctions.c"
+)
+
 
 # Core project settings
 project(${CMAKE_PROJECT_NAME})
@@ -68,6 +74,7 @@ target_link_options(${CMAKE_PROJECT_NAME} PRIVATE
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
     ${USER_LIB_SOURCES}
+    ${DSP_SOURCES}
 )
 
 # Add include paths
@@ -79,11 +86,16 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     util/xprintf/
     util/delay/
     userlib/soes/
+
+    # Add CMSIS-DSP include paths
+    Drivers/CMSIS/DSP/Include
+    Drivers/CMSIS/Include
 )
 
 # Add project symbols (macros)
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined symbols
+    ARM_MATH_CM4
 )
 
 # Remove wrong libob.a library dependency when using cpp files
