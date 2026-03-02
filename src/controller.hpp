@@ -4,6 +4,7 @@
 #include "board.hpp"
 #include "common.hpp"
 #include "RUR_STM_CommonLib/PIDLib/PID.hpp"
+#include "encoder.hpp"
 
 namespace board::x610::receiver {
 
@@ -25,6 +26,15 @@ constexpr BackCalculationPI_D::Parameter q_param = {
     .feed_forward = 0.0f
 };
 
+constexpr BackCalculationPI_D::Parameter velocity_param = {
+    .kp = 0.05,
+    .ki = 2.0f,
+    .kd = 0.0f,
+    .control_frequency = x610_hardware::kTimerInterruptFreq,
+    .manipulated_value_limit = 1.0f,
+    .feed_forward = 0.0f
+};
+
 enum class ControlMode {
     dq_voltage,
     current,
@@ -37,7 +47,7 @@ class BLDCMotorController {
     static constexpr float kLPFAlpha = 0.3;
 
 public:
-    BLDCMotorController() : d_pid_(d_param), q_pid_(q_param) {}
+    BLDCMotorController() : d_pid_(d_param), q_pid_(q_param), velocity_pid_{velocity_param} {}
 
     void config();
 
@@ -63,7 +73,7 @@ public:
         target_position_ = position;
     }
 
-    void artificialCommutationControl();
+    void update();
 
     void positionInitialize(float velocity);
 
@@ -123,6 +133,10 @@ private:
     uint32_t ctl_count_;
 
     ControlMode mode = ControlMode::dq_voltage;
+
+    BLDCPositionTracker tracker{7};
+
+    BackCalculationPI_D velocity_pid_;
 };
 
 }

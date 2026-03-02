@@ -27,18 +27,21 @@ public:
         }
 
         if (key == '+') {
-            dq_vol_ += 0.005;
+            dq_vol_ += 0.05;
             controller.setVoltage(dq_vol_);
+            controller.setTargetVelocity(dq_vol_);
             serial << "DQ Vol: " << dq_vol_ << "\n";
         }
         if (key == '-') {
-            dq_vol_ -= 0.005;
+            dq_vol_ -= 0.05;
             controller.setVoltage(dq_vol_);
+            controller.setTargetVelocity(dq_vol_);
             serial << "DQ Vol: " << dq_vol_ << "\n";
         }
         if (key == '0') {
             dq_vol_ = 0.f;
             controller.setVoltage(dq_vol_);
+            controller.setTargetVelocity(dq_vol_);
             serial << "DQ Vol Reset\n";
         }
         if (key == 'c') {
@@ -50,9 +53,10 @@ public:
         }
 
 
-        if (count++ > 500 && enable_print_) {
+        if (count++ > 50000 && enable_print_) {
             count = 0;
-            x610_hardware::serial << controller.getCurrentD() << ", " << controller.getCurrentQ() << "\n";
+            // x610_hardware::serial << controller.getCurrentD() << ", " << controller.getCurrentQ() << "\n";
+            x610_hardware::serial << controller.getVelocity() << "\n";
         }
     }
 

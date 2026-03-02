@@ -6,6 +6,8 @@
 uint32_t adc_count = 0;
 
 void x610_hardware::it_timer_task() {
+    controller.update();
+
     static uint32_t count = 0;
     if (count++ > 1000) {
         count = 0;

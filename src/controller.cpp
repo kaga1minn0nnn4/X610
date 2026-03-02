@@ -1,5 +1,4 @@
 #include "controller.hpp"
-
 namespace board::x610::receiver {
 
 void BLDCMotorController::config() {
@@ -37,6 +36,8 @@ void BLDCMotorController::config() {
     x610_hardware::serial << "V: " << x610_common::kVectorV[0] << ", " << x610_common::kVectorV[1] << "\n";
     x610_hardware::serial << "W: " << x610_common::kVectorW[0] << ", " << x610_common::kVectorW[1] << "\n";
 
+    tracker.resetPosition();
+
     is_configuration_ = false;
 }
 
@@ -60,7 +61,7 @@ void BLDCMotorController::calibration() {
 
 void BLDCMotorController::controlTask() {
     float d_man_value = d_pid_.getManipulatedValue(current_dq_.d, 0.0f);
-    float q_man_value = q_pid_.getManipulatedValue(current_dq_.q, target_voltage_);
+    float q_man_value = q_pid_.getManipulatedValue(current_dq_.q, target_current_);
 
     x610_common::DQ dq;
     x610_common::AB ab;
@@ -90,6 +91,16 @@ void BLDCMotorController::controlTask() {
     x610_hardware::pwms[0].setDuty(- uvw.u * kDutyMax);
     x610_hardware::pwms[1].setDuty(- uvw.v * kDutyMax);
     x610_hardware::pwms[2].setDuty(- uvw.w * kDutyMax);
+}
+
+void BLDCMotorController::update() {
+
+    target_current_ = velocity_pid_.getManipulatedValue(velocity_, target_velocity_);
+    // static uint32_t count = 0;
+    // if (count++ > 100) {
+    //     count = 0;
+    //     x610_hardware::serial << c << "\n";
+    // }
 }
 
 void BLDCMotorController::setMotorBehavior(MotorBehavior behavior) {
@@ -144,7 +155,6 @@ void BLDCMotorController::updateSensorValue() {
 		m2006_enc_.cos = 1.0f;
 	}
     m2006_enc_.update_angle();
-    position_ = m2006_enc_.angle;
 
     current_ab_.update_from_uvw(current_uvw_);
 
@@ -153,6 +163,10 @@ void BLDCMotorController::updateSensorValue() {
     // LPF
     current_dq_.d = current_dq_raw.d * kLPFAlpha + current_dq_.d * (1 - kLPFAlpha);
     current_dq_.q = current_dq_raw.q * kLPFAlpha + current_dq_.q * (1 - kLPFAlpha);
+
+    tracker.update(m2006_enc_.angle, static_cast<float>(1.0f / (x610_hardware::kPWMTimerFreq / 2.0f)));
+    position_ = tracker.getPosition();
+    velocity_ = tracker.getVelocity();
 
     for (auto& adc : x610_hardware::adcs) {
         adc.update();
