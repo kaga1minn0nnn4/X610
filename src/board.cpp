@@ -28,6 +28,8 @@ G4::LED user_led{G4::PB7};
 G4::PushSensor user_sw{G4::PB9};
 G4::GPIO n_sleep{G4::PA0};
 
+G4::Cordic cordic{G4::cordic};
+
 std::vector<uint16_t> sensor_value_raw(2);
 std::vector<uint16_t> dummy;
 
@@ -82,6 +84,9 @@ bool config() {
 
     result &= canfd.config(peripheral::canfd::Format::fd, peripheral::canfd::Mode::normal, 5e6, 5e6);
     serial << "CANFD1 init...\t" << result << "\n";
+
+    result &= cordic.config();
+    serial << "CORDIC init...\t" << result << "\n";
 
     serial << "\n";
     serial << "---------------------------\n";

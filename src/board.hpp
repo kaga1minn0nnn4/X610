@@ -11,6 +11,7 @@
 #include "RUR_STM_G4Lib/OPAMP.hpp"
 #include "RUR_STM_G4Lib/ADCv2.hpp"
 #include "RUR_STM_G4Lib/CANFD.hpp"
+#include "RUR_STM_G4Lib/CORDIC.hpp"
 
 #include "math.h"
 
@@ -37,6 +38,8 @@ extern G4::GPIO drvoff;
 extern G4::LED user_led;
 extern G4::PushSensor user_sw;
 extern G4::GPIO n_sleep;
+
+extern G4::Cordic cordic;
 
 extern std::vector<uint16_t> sensor_value_raw;
 

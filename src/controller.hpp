@@ -11,7 +11,7 @@ constexpr BackCalculationPI_D::Parameter d_param = {
     .kp = 0.03,
     .ki = 20.0f,
     .kd = 0.0f,
-    .control_frequency = 20000.f,
+    .control_frequency = x610_hardware::kPWMTimerFreq/2,
     .manipulated_value_limit = 1.0f,
     .feed_forward = 0.0f
 };
@@ -20,7 +20,7 @@ constexpr BackCalculationPI_D::Parameter q_param = {
     .kp = 0.03,
     .ki = 20.0f,
     .kd = 0.0f,
-    .control_frequency = 20000.f,
+    .control_frequency = x610_hardware::kPWMTimerFreq/2,
     .manipulated_value_limit = 1.0f,
     .feed_forward = 0.0f
 };
@@ -71,15 +71,21 @@ public:
 
     float getPosition() const { return position_; }
 
+    uint32_t getControlCount() {return ctl_count_;}
+
 private:
     void controlTask();
     void updateSensorValue();
 
     void trgoHandler() {
+        uint32_t start = delay_getCount();
+
         updateSensorValue();
         if(!is_configuration_) {
             controlTask();
         }
+
+        ctl_count_ = delay_getCount() - start;
     }
 
     void enableDriver();
@@ -104,6 +110,8 @@ private:
 
     BackCalculationPI_D d_pid_;
     BackCalculationPI_D q_pid_;
+
+    uint32_t ctl_count_;
 };
 
 }

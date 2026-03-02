@@ -1,6 +1,8 @@
 #pragma once
 
 #include <array>
+#include "board.hpp"
+#include "RUR_STM_G4Lib/CORDIC.hpp"
 
 #ifdef __cplusplus
 extern "C" {
@@ -25,7 +27,7 @@ struct M2006EncoderValue {
     float angle_offset;
 
     void update_angle() {
-        angle = atan2(sin, cos) - angle_offset;
+        angle = x610_hardware::cordic.atan2(sin, cos) - angle_offset;
     }
 
     void reset_offset() {
