@@ -40,6 +40,24 @@ void BLDCMotorController::config() {
     is_configuration_ = false;
 }
 
+void BLDCMotorController::calibration() {
+    x610_hardware::serial << "Calibration..." << "\n";
+
+    m2006_enc_.reset_offset();
+    is_calibration_ = true;
+    enableDriver();
+
+    delay_ms(500);
+
+    m2006_enc_.angle_offset = m2006_enc_.angle;
+
+    disableDriver();
+
+    x610_hardware::serial << "Encoder offset: " << m2006_enc_.angle_offset << "\n";
+
+    is_calibration_ = false;
+}
+
 void BLDCMotorController::controlTask() {
     float d_man_value = d_pid_.getManipulatedValue(current_dq_.d, 0.0f);
     float q_man_value = q_pid_.getManipulatedValue(current_dq_.q, target_voltage_);

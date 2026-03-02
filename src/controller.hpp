@@ -25,6 +25,13 @@ constexpr BackCalculationPI_D::Parameter q_param = {
     .feed_forward = 0.0f
 };
 
+enum class ControlMode {
+    dq_voltage,
+    current,
+    velocity,
+    position,
+};
+
 class BLDCMotorController {
     static constexpr uint16_t kDutyMax = 90;
 
@@ -36,11 +43,24 @@ public:
     void calculateSpeedResponse(float current, float time);
 
     void setVoltage(float voltage) {
+        mode = ControlMode::dq_voltage;
         target_voltage_ = voltage;
     }
-    void setTargetCurrent(float current);
-    void setTargetVelocity(float velocity);
-    void setTargetPosition(float position);
+
+    void setTargetCurrent(float current) {
+        mode = ControlMode::current;
+        target_current_ = current;
+    }
+
+    void setTargetVelocity(float velocity) {
+        mode = ControlMode::velocity;
+        target_velocity_ = velocity;
+    }
+
+    void setTargetPosition(float position) {
+        mode = ControlMode::position;
+        target_position_ = position;
+    }
 
     void artificialCommutationControl();
 
@@ -48,8 +68,10 @@ public:
 
     void setMotorBehavior(MotorBehavior behavior);
 
-    float getCurrent() const { return current_; }
+    float getCurrentD() const { return current_dq_.d; }
+    float getCurrentQ() const { return current_dq_.q; }
     float getVelocity() const { return velocity_; }
+    float getPosition() const { return position_; }
 
     void calibration() {
         x610_hardware::serial << "Calibration..." << "\n";
@@ -68,8 +90,6 @@ public:
 
         is_calibration_ = false;
     }
-
-    float getPosition() const { return position_; }
 
     uint32_t getControlCount() {return ctl_count_;}
 
@@ -98,7 +118,11 @@ private:
     float current_ = 0.f;
     float velocity_ = 0.f;
     float position_ = 0.f;
+
     float target_voltage_;
+    float target_current_;
+    float target_velocity_;
+    float target_position_;
 
     std::array<float, 3> raw_current_uvw_offset_;
 
@@ -112,6 +136,8 @@ private:
     BackCalculationPI_D q_pid_;
 
     uint32_t ctl_count_;
+
+    ControlMode mode = ControlMode::dq_voltage;
 };
 
 }
