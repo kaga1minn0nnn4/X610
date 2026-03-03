@@ -14,20 +14,14 @@ void AB::update_from_uvw(const UVW& uvw) {
     b = (uvw.u * kVectorU[1] + uvw.v * kVectorV[1] + uvw.w * kVectorW[1]) / 1.5f;
 }
 
-void AB::update_from_dq(const DQ& dq, const M2006EncoderValue& enc) {
-    float theta = enc.angle;
-    float c = dsp_math::cos(theta);
-    float s = dsp_math::sin(theta);
-    a = dq.d * c - dq.q * s;
-    b = dq.d * s + dq.q * c;
+void AB::update_from_dq(const DQ& dq, const float& cos, const float& sin) {
+    a = dq.d * cos - dq.q * sin;
+    b = dq.d * sin + dq.q * cos;
 }
 
-void DQ::update_from_ab(const AB& ab, const M2006EncoderValue& enc) {
-    float theta = enc.angle;
-    float c = dsp_math::cos(theta);
-    float s = dsp_math::sin(theta);
-    d = ab.a * c + ab.b * s;
-    q = -ab.a * s + ab.b * c;
+void DQ::update_from_ab(const AB& ab, const float& cos, const float& sin) {
+    d = ab.a * cos + ab.b * sin;
+    q = -ab.a * sin + ab.b * cos;
 }
 
 }

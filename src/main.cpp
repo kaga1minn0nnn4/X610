@@ -6,7 +6,7 @@
 uint32_t adc_count = 0;
 
 void x610_hardware::it_timer_task() {
-    controller.update();
+    current_controller.update();
 
     static uint32_t count = 0;
     if (count++ > 1000) {
@@ -23,7 +23,7 @@ void x610_hardware::it_timer_task() {
 
 void main_process(void) {
     x610_hardware::config();
-    controller.config();
+    current_controller.config();
 
     while (true) {
         auto key = x610_hardware::serial.read().value_or(0);

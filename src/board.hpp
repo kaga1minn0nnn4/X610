@@ -20,6 +20,8 @@ namespace x610_hardware {
 
 constexpr uint32_t kTimerInterruptFreq = 1000;
 constexpr uint32_t kPWMTimerFreq = 40000;
+constexpr uint32_t kCurrentControlFreq = kPWMTimerFreq / 2;
+constexpr float kCurrentControlT = 1 / kCurrentControlFreq;
 
 constexpr uint32_t kOpampGain = 16;
 constexpr float kADCMagnification = 3.3 / 4095.f;

@@ -2,7 +2,6 @@
 
 #include <array>
 #include "board.hpp"
-#include "RUR_STM_G4Lib/CORDIC.hpp"
 
 #ifdef __cplusplus
 extern "C" {
@@ -19,22 +18,6 @@ namespace x610_common {
 constexpr std::array<float, 2> kVectorU = {0.5f, 0.86602540378f};
 constexpr std::array<float, 2> kVectorV = {-1.0f, 0.0f};
 constexpr std::array<float, 2> kVectorW = {0.5f, -0.86602540378f};
-
-struct M2006EncoderValue {
-    float cos;
-    float sin;
-    float angle;
-    float angle_offset;
-
-    void update_angle() {
-        angle = x610_hardware::cordic.atan2(sin, cos) - angle_offset;
-    }
-
-    void reset_offset() {
-        angle_offset = 0;
-    }
-
-};
 
 struct UVW;
 struct AB;
@@ -54,14 +37,14 @@ struct AB {
 
     void update_from_uvw(const UVW& uvw);
 
-    void update_from_dq(const DQ& dq, const M2006EncoderValue& enc);
+    void update_from_dq(const DQ& dq, const float& cos, const float& sin);
 };
 
 struct DQ {
     float d;
     float q;
 
-    void update_from_ab(const AB& ab, const M2006EncoderValue& enc);
+    void update_from_ab(const AB& ab, const float& cos, const float& sin);
 };
 
 }

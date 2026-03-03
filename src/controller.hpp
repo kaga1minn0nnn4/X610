@@ -6,13 +6,13 @@
 #include "RUR_STM_CommonLib/PIDLib/PID.hpp"
 #include "encoder.hpp"
 
-namespace board::x610::receiver {
+namespace x610_controller {
 
 constexpr BackCalculationPI_D::Parameter d_param = {
     .kp = 0.03,
     .ki = 20.0f,
     .kd = 0.0f,
-    .control_frequency = x610_hardware::kPWMTimerFreq/2,
+    .control_frequency = x610_hardware::kCurrentControlFreq,
     .manipulated_value_limit = 1.0f,
     .feed_forward = 0.0f
 };
@@ -21,7 +21,7 @@ constexpr BackCalculationPI_D::Parameter q_param = {
     .kp = 0.03,
     .ki = 20.0f,
     .kd = 0.0f,
-    .control_frequency = x610_hardware::kPWMTimerFreq/2,
+    .control_frequency = x610_hardware::kCurrentControlFreq,
     .manipulated_value_limit = 1.0f,
     .feed_forward = 0.0f
 };
@@ -52,12 +52,12 @@ enum class ControlMode {
     calculate_speed_response
 };
 
-class BLDCMotorController {
+class BLDCMotorCurrentController {
     static constexpr uint16_t kDutyMax = 90;
     static constexpr float kLPFAlpha = 0.3;
 
 public:
-    BLDCMotorController() : d_pid_(d_param), q_pid_(q_param), velocity_pid_{velocity_param}, position_pid_{position_param} {}
+    BLDCMotorCurrentController() : d_pid_(d_param), q_pid_(q_param), velocity_pid_{velocity_param}, position_pid_{position_param} {}
 
     void config();
 
@@ -87,7 +87,7 @@ public:
 
     void positionInitialize(float velocity);
 
-    void setMotorBehavior(MotorBehavior behavior);
+    void setMotorBehavior(board::x610::MotorBehavior behavior);
 
     float getCurrentD() const { return current_dq_.d; }
     float getCurrentQ() const { return current_dq_.q; }
@@ -135,8 +135,6 @@ private:
     x610_common::AB current_ab_;
     x610_common::DQ current_dq_;
 
-    x610_common::M2006EncoderValue m2006_enc_;
-
     BackCalculationPI_D d_pid_;
     BackCalculationPI_D q_pid_;
 
@@ -144,10 +142,9 @@ private:
 
     ControlMode mode = ControlMode::dq_voltage;
 
-    BLDCPositionTracker tracker{7};
+    x610_common::RotaryEncoder encoder{7};
 
     BackCalculationPI_D velocity_pid_;
-
     BackCalculationPI_D position_pid_;
 
     uint32_t stop_time_ = 0;
@@ -155,4 +152,4 @@ private:
 
 }
 
-extern board::x610::receiver::BLDCMotorController controller;
+extern x610_controller::BLDCMotorCurrentController current_controller;

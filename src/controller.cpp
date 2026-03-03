@@ -1,8 +1,8 @@
 #include "controller.hpp"
-namespace board::x610::receiver {
+namespace x610_controller {
 
-void BLDCMotorController::config() {
-    x610_hardware::adcs[0].configIT(std::bind(&BLDCMotorController::trgoHandler, this));
+void BLDCMotorCurrentController::config() {
+    x610_hardware::adcs[0].configIT(std::bind(&BLDCMotorCurrentController::trgoHandler, this));
 
     for (auto& adc : x610_hardware::adcs) {
         adc.calibration();
@@ -36,30 +36,30 @@ void BLDCMotorController::config() {
     x610_hardware::serial << "V: " << x610_common::kVectorV[0] << ", " << x610_common::kVectorV[1] << "\n";
     x610_hardware::serial << "W: " << x610_common::kVectorW[0] << ", " << x610_common::kVectorW[1] << "\n";
 
-    tracker.resetPosition();
+    encoder.resetRotorPosition();
 
     is_configuration_ = false;
 }
 
-void BLDCMotorController::calibration() {
+void BLDCMotorCurrentController::calibration() {
     x610_hardware::serial << "Calibration..." << "\n";
 
-    m2006_enc_.reset_offset();
+    encoder.resetElectricalAngleOffset();
     is_calibration_ = true;
     enableDriver();
 
     delay_ms(500);
 
-    m2006_enc_.angle_offset = m2006_enc_.angle;
+    encoder.offsetElectricalAngle();
 
     disableDriver();
 
-    x610_hardware::serial << "Encoder offset: " << m2006_enc_.angle_offset << "\n";
+    x610_hardware::serial << "Encoder offset: " << encoder.getElectricalAngleOffset() << "\n";
 
     is_calibration_ = false;
 }
 
-void BLDCMotorController::calculateSpeedResponse(float current, float time) {
+void BLDCMotorCurrentController::calculateSpeedResponse(float current, float time) {
     mode = ControlMode::calculate_speed_response;
     disableDriver();
     delay_ms(100);
@@ -77,7 +77,7 @@ void BLDCMotorController::calculateSpeedResponse(float current, float time) {
     x610_hardware::serial << "Velocity: " << getVelocity() << "\n";
 }
 
-void BLDCMotorController::controlTask() {
+void BLDCMotorCurrentController::controlTask() {
     float d_man_value = d_pid_.getManipulatedValue(current_dq_.d, 0.0f);
     float q_man_value = q_pid_.getManipulatedValue(current_dq_.q, target_current_);
 
@@ -98,7 +98,7 @@ void BLDCMotorController::controlTask() {
         dq.d = d_man_value;
         dq.q = q_man_value;
 
-        ab.update_from_dq(dq, m2006_enc_);
+        ab.update_from_dq(dq, encoder.getElectricalAngleCosine(), encoder.getElectricalAngleSine());
         uvw.update_from_ab(ab);
     }
 
@@ -111,7 +111,7 @@ void BLDCMotorController::controlTask() {
     x610_hardware::pwms[2].setDuty(- uvw.w * kDutyMax);
 }
 
-void BLDCMotorController::update() {
+void BLDCMotorCurrentController::update() {
     switch (mode) {
     case ControlMode::calculate_speed_response:
         break;
@@ -126,16 +126,16 @@ void BLDCMotorController::update() {
     }
 }
 
-void BLDCMotorController::setMotorBehavior(MotorBehavior behavior) {
+void BLDCMotorCurrentController::setMotorBehavior(board::x610::MotorBehavior behavior) {
     switch (behavior) {
-    case MotorBehavior::enable:
+    case board::x610::MotorBehavior::enable:
         d_pid_.resetStatus();
         q_pid_.resetStatus();
         velocity_pid_.resetStatus();
         position_pid_.resetStatus();
         enableDriver();
         break;
-    case MotorBehavior::disable:
+    case board::x610::MotorBehavior::disable:
         disableDriver();
         break;
     default:
@@ -143,7 +143,7 @@ void BLDCMotorController::setMotorBehavior(MotorBehavior behavior) {
     }
 }
 
-void BLDCMotorController::enableDriver() {
+void BLDCMotorCurrentController::enableDriver() {
     // なんかドライバONにした後にPWM出力始めないとnFAULT吐いて落ちる
 
     for (auto& pwm : x610_hardware::pwms) {
@@ -160,11 +160,11 @@ void BLDCMotorController::enableDriver() {
     }
 }
 
-void BLDCMotorController::disableDriver() {
+void BLDCMotorCurrentController::disableDriver() {
     x610_hardware::drvoff.write(true);
 }
 
-void BLDCMotorController::updateSensorValue() {
+void BLDCMotorCurrentController::updateSensorValue() {
 	current_uvw_.u = -(x610_hardware::adcs[1].getInjectionData(peripheral::adcv2::InjectionChannel::_2) - raw_current_uvw_offset_[0]) * x610_hardware::kCurrentMagnification;
 	current_uvw_.v = -(x610_hardware::adcs[1].getInjectionData(peripheral::adcv2::InjectionChannel::_1) - raw_current_uvw_offset_[1]) * x610_hardware::kCurrentMagnification;
 	current_uvw_.w = -(x610_hardware::adcs[0].getInjectionData(peripheral::adcv2::InjectionChannel::_1) - raw_current_uvw_offset_[2]) * x610_hardware::kCurrentMagnification;
@@ -172,26 +172,27 @@ void BLDCMotorController::updateSensorValue() {
     float cos_raw = x610_hardware::sensor_value_raw[0] * x610_hardware::kADCMagnification - 1.0f;
     float sin_raw = x610_hardware::sensor_value_raw[1] * x610_hardware::kADCMagnification - 1.0f;
     float norm = dsp_math::sqrt(sin_raw*sin_raw + cos_raw*cos_raw);
+    float cos_norm;
+    float sin_norm;
 	if (norm > 0.0f) {
-		m2006_enc_.sin = sin_raw / norm;
-		m2006_enc_.cos = cos_raw / norm;
+		sin_norm = sin_raw / norm;
+		cos_norm = cos_raw / norm;
 	} else {
-		m2006_enc_.sin = 0.0f;
-		m2006_enc_.cos = 1.0f;
+		sin_norm = 0.0f;
+        cos_norm = 1.0f;
 	}
-    m2006_enc_.update_angle();
+    encoder.updateFromSinCos(sin_norm, cos_norm, x610_hardware::kCurrentControlT);
 
     current_ab_.update_from_uvw(current_uvw_);
 
     x610_common::DQ current_dq_raw;
-    current_dq_raw.update_from_ab(current_ab_, m2006_enc_);
+    current_dq_raw.update_from_ab(current_ab_, encoder.getElectricalAngleCosine(), encoder.getElectricalAngleSine());
     // LPF
     current_dq_.d = current_dq_raw.d * kLPFAlpha + current_dq_.d * (1 - kLPFAlpha);
     current_dq_.q = current_dq_raw.q * kLPFAlpha + current_dq_.q * (1 - kLPFAlpha);
 
-    tracker.update(m2006_enc_.angle, static_cast<float>(1.0f / (x610_hardware::kPWMTimerFreq / 2.0f)));
-    position_ = tracker.getPosition();
-    velocity_ = tracker.getVelocity();
+    position_ = encoder.getRotorPosition();
+    velocity_ = encoder.getRotorVelocity();
 
     for (auto& adc : x610_hardware::adcs) {
         adc.update();
@@ -200,4 +201,4 @@ void BLDCMotorController::updateSensorValue() {
 
 }
 
-board::x610::receiver::BLDCMotorController controller;
+x610_controller::BLDCMotorCurrentController current_controller;
