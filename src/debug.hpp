@@ -1,6 +1,6 @@
 #pragma once
 
-#include "controller.hpp"
+#include "angle_controller.hpp"
 
 namespace x610_hardware {
 
@@ -11,6 +11,11 @@ public:
 
     void setup() {
         serial << "Debug Mode Setup...\n";
+
+        angle_controller.setVelocityPIDGain(0.05f, 1.f, 0.f);
+        angle_controller.setPositionPIDGain(10.f, 0.3f, 0.3f);
+
+        angle_controller.resetPIDStatus();
     }
 
     void run() {
@@ -19,30 +24,27 @@ public:
         auto key = x610_hardware::serial.read().value_or(0);
         if (key == 'e') {
             serial << "Enable\n";
-            current_controller.setMotorBehavior(board::x610::MotorBehavior::enable);
+            angle_controller.enable();
         }
         if (key == 'd') {
             serial << "Disable\n";
-            current_controller.setMotorBehavior(board::x610::MotorBehavior::disable);
+            angle_controller.disable();
         }
 
         if (key == '+') {
             dq_vol_ += 1.0;
-            current_controller.setTargetPosition(dq_vol_ * 36);
+            angle_controller.setTargetPosition(dq_vol_ * 36);
             serial << "DQ Vol: " << dq_vol_ << "\n";
         }
         if (key == '-') {
             dq_vol_ -= 1.0;
-            current_controller.setTargetPosition(dq_vol_ * 36);
+            angle_controller.setTargetPosition(dq_vol_ * 36);
             serial << "DQ Vol: " << dq_vol_ << "\n";
         }
         if (key == '0') {
             dq_vol_ = 0.f;
-            current_controller.setTargetVelocity(dq_vol_);
+            angle_controller.setTargetVelocity(dq_vol_);
             serial << "DQ Vol Reset\n";
-        }
-        if (key == 'c') {
-            current_controller.calibration();
         }
 
         if (key == 'p') {
@@ -50,14 +52,14 @@ public:
         }
 
         if (key == 's') {
-            current_controller.calculateSpeedResponse(1.0f, 1.0f);
+            angle_controller.calculateSpeedResponse(1.0f, 1.0f);
         }
 
 
         if (count++ > 50000 && enable_print_) {
             count = 0;
-            // x610_hardware::serial << current_controller.getCurrentD() << ", " << current_controller.getCurrentQ() << "\n";
-            x610_hardware::serial << current_controller.getPosition() << "\n";
+            // x610_hardware::serial << angle_controller.getCurrentD() << ", " << angle_controller.getCurrentQ() << "\n";
+            x610_hardware::serial << angle_controller.getPosition() << "\n";
         }
     }
 

@@ -33,6 +33,27 @@ G4::Cordic cordic{G4::cordic};
 std::vector<uint16_t> sensor_value_raw(2);
 std::vector<uint16_t> dummy;
 
+void enable_driver() {
+    // なんかドライバONにした後にPWM出力始めないとnFAULT吐いて落ちる
+
+    for (auto& pwm : x610_hardware::pwms) {
+        pwm.setEnable(false);
+    }
+    delay_ms(10);
+
+    x610_hardware::drvoff.write(false);
+
+    delay_ms(100);
+
+    for (auto& pwm : x610_hardware::pwms) {
+        pwm.setEnable(true);
+    }
+}
+
+void disable_driver() {
+    x610_hardware::drvoff.write(true);
+}
+
 bool config() {
     bool result = true;
     result &= serial.config(115200);

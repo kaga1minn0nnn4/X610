@@ -1,4 +1,6 @@
-#include "controller.hpp"
+#include "current_controller.hpp"
+
+
 namespace x610_controller {
 
 void BLDCMotorCurrentController::config() {
@@ -27,14 +29,9 @@ void BLDCMotorCurrentController::config() {
         delay_ms(100);
     }
     x610_hardware::serial << "Offset: \n";
-    x610_hardware::serial << raw_current_uvw_offset_[0] << ",";
-    x610_hardware::serial << raw_current_uvw_offset_[1] << ",";
-    x610_hardware::serial << raw_current_uvw_offset_[2] << "\n";
-
-    x610_hardware::serial << "Vector: \n";
-    x610_hardware::serial << "U: " << x610_common::kVectorU[0] << ", " << x610_common::kVectorU[1] << "\n";
-    x610_hardware::serial << "V: " << x610_common::kVectorV[0] << ", " << x610_common::kVectorV[1] << "\n";
-    x610_hardware::serial << "W: " << x610_common::kVectorW[0] << ", " << x610_common::kVectorW[1] << "\n";
+    x610_hardware::serial << "U: " << raw_current_uvw_offset_[0] * x610_hardware::kADCMagnification << "[V]" << ",";
+    x610_hardware::serial << "V: " << raw_current_uvw_offset_[1] * x610_hardware::kADCMagnification << "[V]" << ",";
+    x610_hardware::serial << "W: " << raw_current_uvw_offset_[2] * x610_hardware::kADCMagnification << "[V]" << "\n";
 
     encoder.resetRotorPosition();
 
@@ -46,35 +43,17 @@ void BLDCMotorCurrentController::calibration() {
 
     encoder.resetElectricalAngleOffset();
     is_calibration_ = true;
-    enableDriver();
+    enable();
 
     delay_ms(500);
 
     encoder.offsetElectricalAngle();
 
-    disableDriver();
+    disable();
 
     x610_hardware::serial << "Encoder offset: " << encoder.getElectricalAngleOffset() << "\n";
 
     is_calibration_ = false;
-}
-
-void BLDCMotorCurrentController::calculateSpeedResponse(float current, float time) {
-    mode = ControlMode::calculate_speed_response;
-    disableDriver();
-    delay_ms(100);
-
-    setTargetCurrent(0.f);
-
-    enableDriver();
-    setTargetCurrent(current);
-
-    delay_ms(static_cast<uint32_t>(time * 1000));
-
-    setTargetCurrent(0.f);
-    disableDriver();
-
-    x610_hardware::serial << "Velocity: " << getVelocity() << "\n";
 }
 
 void BLDCMotorCurrentController::controlTask() {
@@ -111,57 +90,14 @@ void BLDCMotorCurrentController::controlTask() {
     x610_hardware::pwms[2].setDuty(- uvw.w * kDutyMax);
 }
 
-void BLDCMotorCurrentController::update() {
-    switch (mode) {
-    case ControlMode::calculate_speed_response:
-        break;
-    case ControlMode::velocity:
-        target_current_ = velocity_pid_.getManipulatedValue(velocity_, target_velocity_);
-        break;
-    case ControlMode::position:
-        target_current_ = velocity_pid_.getManipulatedValue(velocity_, position_pid_.getManipulatedValue(position_, target_position_));
-        break;
-    default:
-        break;
-    }
+void BLDCMotorCurrentController::enable() {
+    d_pid_.resetStatus();
+    q_pid_.resetStatus();
+    x610_hardware::enable_driver();
 }
 
-void BLDCMotorCurrentController::setMotorBehavior(board::x610::MotorBehavior behavior) {
-    switch (behavior) {
-    case board::x610::MotorBehavior::enable:
-        d_pid_.resetStatus();
-        q_pid_.resetStatus();
-        velocity_pid_.resetStatus();
-        position_pid_.resetStatus();
-        enableDriver();
-        break;
-    case board::x610::MotorBehavior::disable:
-        disableDriver();
-        break;
-    default:
-        break;
-    }
-}
-
-void BLDCMotorCurrentController::enableDriver() {
-    // なんかドライバONにした後にPWM出力始めないとnFAULT吐いて落ちる
-
-    for (auto& pwm : x610_hardware::pwms) {
-        pwm.setEnable(false);
-    }
-    delay_ms(10);
-
-    x610_hardware::drvoff.write(false);
-
-    delay_ms(100);
-
-    for (auto& pwm : x610_hardware::pwms) {
-        pwm.setEnable(true);
-    }
-}
-
-void BLDCMotorCurrentController::disableDriver() {
-    x610_hardware::drvoff.write(true);
+void BLDCMotorCurrentController::disable() {
+    x610_hardware::disable_driver();
 }
 
 void BLDCMotorCurrentController::updateSensorValue() {
@@ -199,6 +135,15 @@ void BLDCMotorCurrentController::updateSensorValue() {
     }
 }
 
+void BLDCMotorCurrentController::trgoHandler() {
+    uint32_t start = delay_getCount();
+
+    updateSensorValue();
+    if(!is_configuration_) {
+        controlTask();
+    }
+
+    ctl_count_ = delay_getCount() - start;
 }
 
-x610_controller::BLDCMotorCurrentController current_controller;
+}

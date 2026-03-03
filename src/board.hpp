@@ -47,6 +47,9 @@ extern std::vector<uint16_t> sensor_value_raw;
 extern void it_timer_task();
 extern void adc_task();
 
+void enable_driver();
+void disable_driver();
+
 bool config();
 
 
