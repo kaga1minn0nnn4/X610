@@ -59,6 +59,24 @@ void BLDCMotorController::calibration() {
     is_calibration_ = false;
 }
 
+void BLDCMotorController::calculateSpeedResponse(float current, float time) {
+    mode = ControlMode::calculate_speed_response;
+    disableDriver();
+    delay_ms(100);
+
+    setTargetCurrent(0.f);
+
+    enableDriver();
+    setTargetCurrent(current);
+
+    delay_ms(static_cast<uint32_t>(time * 1000));
+
+    setTargetCurrent(0.f);
+    disableDriver();
+
+    x610_hardware::serial << "Velocity: " << getVelocity() << "\n";
+}
+
 void BLDCMotorController::controlTask() {
     float d_man_value = d_pid_.getManipulatedValue(current_dq_.d, 0.0f);
     float q_man_value = q_pid_.getManipulatedValue(current_dq_.q, target_current_);
@@ -94,13 +112,18 @@ void BLDCMotorController::controlTask() {
 }
 
 void BLDCMotorController::update() {
-
-    target_current_ = velocity_pid_.getManipulatedValue(velocity_, target_velocity_);
-    // static uint32_t count = 0;
-    // if (count++ > 100) {
-    //     count = 0;
-    //     x610_hardware::serial << c << "\n";
-    // }
+    switch (mode) {
+    case ControlMode::calculate_speed_response:
+        break;
+    case ControlMode::velocity:
+        target_current_ = velocity_pid_.getManipulatedValue(velocity_, target_velocity_);
+        break;
+    case ControlMode::position:
+        target_current_ = velocity_pid_.getManipulatedValue(velocity_, position_pid_.getManipulatedValue(position_, target_position_));
+        break;
+    default:
+        break;
+    }
 }
 
 void BLDCMotorController::setMotorBehavior(MotorBehavior behavior) {
@@ -108,6 +131,8 @@ void BLDCMotorController::setMotorBehavior(MotorBehavior behavior) {
     case MotorBehavior::enable:
         d_pid_.resetStatus();
         q_pid_.resetStatus();
+        velocity_pid_.resetStatus();
+        position_pid_.resetStatus();
         enableDriver();
         break;
     case MotorBehavior::disable:

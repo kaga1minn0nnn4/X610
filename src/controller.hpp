@@ -27,11 +27,20 @@ constexpr BackCalculationPI_D::Parameter q_param = {
 };
 
 constexpr BackCalculationPI_D::Parameter velocity_param = {
-    .kp = 0.05,
-    .ki = 2.0f,
+    .kp = 0.05f,
+    .ki = 5.f / 5.f,
     .kd = 0.0f,
     .control_frequency = x610_hardware::kTimerInterruptFreq,
-    .manipulated_value_limit = 1.0f,
+    .manipulated_value_limit = 3.0f,
+    .feed_forward = 0.0f
+};
+
+constexpr BackCalculationPI_D::Parameter position_param = {
+    .kp = 10.f,
+    .ki = 0.3f,
+    .kd = 0.3f,
+    .control_frequency = x610_hardware::kTimerInterruptFreq,
+    .manipulated_value_limit = 100.0f,
     .feed_forward = 0.0f
 };
 
@@ -40,6 +49,7 @@ enum class ControlMode {
     current,
     velocity,
     position,
+    calculate_speed_response
 };
 
 class BLDCMotorController {
@@ -47,7 +57,7 @@ class BLDCMotorController {
     static constexpr float kLPFAlpha = 0.3;
 
 public:
-    BLDCMotorController() : d_pid_(d_param), q_pid_(q_param), velocity_pid_{velocity_param} {}
+    BLDCMotorController() : d_pid_(d_param), q_pid_(q_param), velocity_pid_{velocity_param}, position_pid_{position_param} {}
 
     void config();
 
@@ -137,6 +147,10 @@ private:
     BLDCPositionTracker tracker{7};
 
     BackCalculationPI_D velocity_pid_;
+
+    BackCalculationPI_D position_pid_;
+
+    uint32_t stop_time_ = 0;
 };
 
 }
