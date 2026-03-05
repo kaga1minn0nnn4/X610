@@ -30,7 +30,8 @@ class BLDCMotorCurrentController {
     enum class Mode {
         voltage,
         current,
-        calibration
+        calibration,
+        sound
     };
 
     static constexpr uint16_t kDutyMax = 90;
@@ -57,6 +58,12 @@ public:
         mode_ = Mode::voltage;
     }
 
+    void setSound(float hz, float volume) {
+        volume_ = volume;
+        hz_ = hz;
+        mode_ = Mode::sound;
+    }
+
     float getCurrentD() const { return current_dq_.d; }
     float getCurrentQ() const { return current_dq_.q; }
     float getVelocity() const { return velocity_; }
@@ -71,6 +78,8 @@ private:
 
     void setDuty(const x610_common::UVW& uvw);
 
+    float generateSoundPulse(float volume, float hz);
+
 private:
     Mode mode_;
 
@@ -83,6 +92,9 @@ private:
     float target_voltage_d_;
     float target_voltage_q_;
     float target_current_;
+
+    float volume_;
+    float hz_;
 
     std::array<float, 3> raw_current_uvw_offset_;
 

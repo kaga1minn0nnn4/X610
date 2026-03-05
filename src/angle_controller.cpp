@@ -5,6 +5,19 @@ namespace x610_controller {
 void AngleController::config() {
     current_controller_.config();
     current_controller_.calibration();
+
+    delay_ms(100);
+
+    current_controller_.enable();
+    current_controller_.setSound(261.63, 0.1f);
+    delay_ms(200);
+    current_controller_.setSound(293.665, 0.1f);
+    delay_ms(200);
+    current_controller_.setSound(391.995, 0.1f);
+    delay_ms(500);
+
+    current_controller_.disable();
+    current_controller_.setTargetCurrent(0.0f);
 }
 
 void AngleController::update() {

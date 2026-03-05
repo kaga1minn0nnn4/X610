@@ -56,6 +56,28 @@ void BLDCMotorCurrentController::calibration() {
     mode_ = Mode::current;
 }
 
+float BLDCMotorCurrentController::generateSoundPulse(float volume, float hz) {
+    static float phase_accumulator = 0.0f;
+
+    if (hz <= 0.0f) {
+        phase_accumulator = 0.0f;
+        return 0.0f;
+    }
+
+    float phase_increment = hz / x610_hardware::kCurrentControlFreq;
+    phase_accumulator += phase_increment;
+
+    if (phase_accumulator >= 1.0f) {
+        phase_accumulator -= 1.0f;
+    }
+
+    if (phase_accumulator < 0.5f) {
+        return volume;
+    } else {
+        return 0.0f;
+    }
+}
+
 void BLDCMotorCurrentController::controlTask() {
     float d_man_value = d_pid_.getManipulatedValue(current_dq_.d, 0.0f);
     float q_man_value = q_pid_.getManipulatedValue(current_dq_.q, target_current_);
@@ -85,6 +107,12 @@ void BLDCMotorCurrentController::controlTask() {
     case Mode::calibration:
         ab.a = 0.1;
         ab.b = 0.0;
+        uvw.update_from_ab(ab);
+        break;
+    case Mode::sound:
+        dq.d = generateSoundPulse(volume_, hz_);
+        dq.q = 0.f;
+        ab.update_from_dq(dq, encoder.getElectricalAngleCosine(), encoder.getElectricalAngleSine());
         uvw.update_from_ab(ab);
         break;
     default:
