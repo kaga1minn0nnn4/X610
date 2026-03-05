@@ -42,7 +42,7 @@ void BLDCMotorCurrentController::calibration() {
     x610_hardware::serial << "Calibration..." << "\n";
 
     encoder.resetElectricalAngleOffset();
-    is_calibration_ = true;
+    mode_ = Mode::calibration;
     enable();
 
     delay_ms(500);
@@ -53,41 +53,57 @@ void BLDCMotorCurrentController::calibration() {
 
     x610_hardware::serial << "Encoder offset: " << encoder.getElectricalAngleOffset() << "\n";
 
-    is_calibration_ = false;
+    mode_ = Mode::current;
 }
 
 void BLDCMotorCurrentController::controlTask() {
     float d_man_value = d_pid_.getManipulatedValue(current_dq_.d, 0.0f);
     float q_man_value = q_pid_.getManipulatedValue(current_dq_.q, target_current_);
+    float norm = dsp_math::sqrt(d_man_value*d_man_value + q_man_value*q_man_value);
+    if (norm > 1.0) {
+        d_man_value /= norm;
+        q_man_value /= norm;
+    }
 
     x610_common::DQ dq;
     x610_common::AB ab;
     x610_common::UVW uvw;
 
-    if (is_calibration_) {
+    switch (mode_) {
+    case Mode::voltage:
+        dq.d = target_voltage_d_;
+        dq.q = target_voltage_q_;
+        ab.update_from_dq(dq, encoder.getElectricalAngleCosine(), encoder.getElectricalAngleSine());
+        uvw.update_from_ab(ab);
+        break;
+    case Mode::current:
+        dq.d = d_man_value;
+        dq.q = q_man_value;
+        ab.update_from_dq(dq, encoder.getElectricalAngleCosine(), encoder.getElectricalAngleSine());
+        uvw.update_from_ab(ab);
+        break;
+    case Mode::calibration:
         ab.a = 0.1;
         ab.b = 0.0;
         uvw.update_from_ab(ab);
-    } else {
-        float norm = dsp_math::sqrt(d_man_value*d_man_value + q_man_value*q_man_value);
-        if (norm > 1.0) {
-            d_man_value /= norm;
-            q_man_value /= norm;
-        }
-        dq.d = d_man_value;
-        dq.q = q_man_value;
-
-        ab.update_from_dq(dq, encoder.getElectricalAngleCosine(), encoder.getElectricalAngleSine());
-        uvw.update_from_ab(ab);
+        break;
+    default:
+        break;
     }
 
-    uvw.u = std::clamp<float>(uvw.u, -1.0, 1.0);
-    uvw.v = std::clamp<float>(uvw.v, -1.0, 1.0);
-    uvw.w = std::clamp<float>(uvw.w, -1.0, 1.0);
+    setDuty(uvw);
+}
 
-    x610_hardware::pwms[0].setDuty(- uvw.u * kDutyMax);
-    x610_hardware::pwms[1].setDuty(- uvw.v * kDutyMax);
-    x610_hardware::pwms[2].setDuty(- uvw.w * kDutyMax);
+void BLDCMotorCurrentController::setDuty(const x610_common::UVW& uvw) {
+    x610_common::UVW uvw_;
+
+    uvw_.u = std::clamp<float>(uvw.u, -1.0, 1.0);
+    uvw_.v = std::clamp<float>(uvw.v, -1.0, 1.0);
+    uvw_.w = std::clamp<float>(uvw.w, -1.0, 1.0);
+
+    x610_hardware::pwms[0].setDuty(- uvw_.u * kDutyMax);
+    x610_hardware::pwms[1].setDuty(- uvw_.v * kDutyMax);
+    x610_hardware::pwms[2].setDuty(- uvw_.w * kDutyMax);
 }
 
 void BLDCMotorCurrentController::enable() {

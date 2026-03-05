@@ -8,6 +8,10 @@ void AngleController::config() {
 }
 
 void AngleController::update() {
+    if (mode_ == AngleControlMode::none) {
+        return;
+    }
+
     float target_current = 0.f;
     switch (mode_) {
     case AngleControlMode::position:

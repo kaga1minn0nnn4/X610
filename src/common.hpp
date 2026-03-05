@@ -51,16 +51,31 @@ struct DQ {
 
 namespace dsp_math {
 
+/**
+ * @brief DSPライブラリを使ったsqrt計算
+ * @param x
+ * @return float
+ */
 inline float sqrt(float x) {
     float result;
     arm_sqrt_f32(x, &result);
     return result;
 }
 
+/**
+ * @brief DSPライブラリを使ったsin計算
+ * @param x
+ * @return float
+ */
 inline float sin(float x) {
     return arm_sin_f32(x);
 }
 
+/**
+ * @brief DSPライブラリを使ったcos計算
+ * @param x
+ * @return float
+ */
 inline float cos(float x) {
     return arm_cos_f32(x);
 }

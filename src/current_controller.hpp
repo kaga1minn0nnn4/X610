@@ -26,6 +26,13 @@ constexpr BackCalculationPI_D::Parameter q_param = {
 };
 
 class BLDCMotorCurrentController {
+
+    enum class Mode {
+        voltage,
+        current,
+        calibration
+    };
+
     static constexpr uint16_t kDutyMax = 90;
     static constexpr float kLPFAlpha = 0.3;
 
@@ -39,7 +46,16 @@ public:
 
     void calibration();
 
-    void setTargetCurrent(float current) { target_current_ = current; }
+    void setTargetCurrent(float current) {
+        target_current_ = current;
+        mode_ = Mode::current;
+    }
+
+    void setVoltage(float d, float q) {
+        target_voltage_d_ = d;
+        target_voltage_q_ = q;
+        mode_ = Mode::voltage;
+    }
 
     float getCurrentD() const { return current_dq_.d; }
     float getCurrentQ() const { return current_dq_.q; }
@@ -53,15 +69,19 @@ private:
 
     void trgoHandler();
 
+    void setDuty(const x610_common::UVW& uvw);
+
 private:
+    Mode mode_;
+
     bool is_configuration_ = true;
-    bool is_calibration_ = false;
 
     float current_ = 0.f;
     float velocity_ = 0.f;
     float position_ = 0.f;
 
-    float target_voltage_;
+    float target_voltage_d_;
+    float target_voltage_q_;
     float target_current_;
 
     std::array<float, 3> raw_current_uvw_offset_;

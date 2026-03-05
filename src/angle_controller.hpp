@@ -10,19 +10,17 @@ namespace x610_controller {
 
 namespace {
 
-enum class AngleControlMode {
-    none,
-    current,
-    velocity,
-    position,
-    calculate_speed_response
-};
 
 }
 
 class AngleController {
-
-
+    enum class AngleControlMode {
+        none,
+        current,
+        velocity,
+        position,
+        calculate_speed_response
+    };
 public:
     AngleController() : current_controller_{} {}
 
@@ -45,9 +43,9 @@ public:
     void enable();
     void disable();
 
-    float getCurrent() { current_controller_.getCurrentQ(); }
-    float getVelocity() { current_controller_.getVelocity(); }
-    float getPosition() { current_controller_.getPosition(); }
+    float getCurrent() { return current_controller_.getCurrentQ(); }
+    float getVelocity() { return  current_controller_.getVelocity(); }
+    float getPosition() { return  current_controller_.getPosition(); }
 
     void resetPIDStatus();
 
